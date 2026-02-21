@@ -37,32 +37,41 @@ days = date.today().timetuple().tm_yday
 def partialMileage(dist,splits):
     #TODO: figure out the mess that is 100M and 50M
     #TODO: make sure all 100K and 50K splits are equal
+    m=0
     if splits == 0: return 0
-    elif '100K' in dist: return (splits/4)*62.1
-    elif '50K' in dist: return (splits/2)*31.1
+    elif '100K' in dist: m = (splits/4)*62.1
+    elif '50K' in dist: m = (splits/2)*31.1
+    return 0 if m < 26.2 else m
 
-def updateT300(table,dist):
-    #TODO: add call with prior year's data
-    finishers = table.loc[table['Status']=='Complete']
+def updateT300():
+    page1 = requests.get("http://edsresults.com/cr{}/index.php?search_type=race_results&event=100M&gender=&results_per_page=1000".format(str(cur_year-1)[-2:])).content
+    table1 = pd.read_html(StringIO(str(bs(page1,features="lxml").find_all('table',{'id':'data'}))))[0]
+    page2 = requests.get("http://edsresults.com/bandera{}/index.php?search_type=race_results&event=100K&gender=&results_per_page=1000".format(str(cur_year)[-2:])).content
+    table2 = pd.read_html(StringIO(str(bs(page2,features="lxml").find_all('table',{'id':'data'}))))[0]
+    page3 = requests.get("http://edsresults.com/{}rr100/index.php?search_type=race_results&event=100M&gender=&results_per_page=1000".format(str(cur_year))).content
+    table3 = pd.read_html(StringIO(str(bs(page3,features="lxml").find_all('table',{'id':'data'}))))[0]
+    page4 = requests.get("http://edsresults.com/{}rr100/index.php?search_type=race_results&event=100K&gender=&results_per_page=1000".format(str(cur_year))).content
+    table4 = pd.read_html(StringIO(str(bs(page4,features="lxml").find_all('table',{'id':'data'}))))[0]
+    tables = [[table1,'100M'],[table2,'100K'],[table3,'100M'],[table4,'100K']]
+    for table,dist in tables:
+        finishers = table.loc[table['Status']=='Complete']
 
-    for index,table in list(finishers.iterrows()):
-        data=str(table).splitlines()[:-1]
-        name = (str(data[4].split(" ")[-1])+" "+str(data[5].split(" ")[-1])).lower()
-        mileage=0
-        if   "100M" in dist: mileage+=100
-        elif "100K" in dist: mileage+=62.1
-        elif "50M" in dist: mileage+=50
-        elif "50K" in dist: mileage+=31.1
+        for index,table in list(finishers.iterrows()):
+            data=str(table).splitlines()[:-1]
+            name = (str(data[4].split(" ")[-1])+" "+str(data[5].split(" ")[-1])).lower()
+            mileage=0
+            if   "100M" in dist: mileage+=100
+            elif "100K" in dist: mileage+=62.1
 
-        with open('standings/T300.json', 'r+') as file:
-            t300=json.load(file)
-            #update mileages
-            if name in t300: t300[name] += mileage
-            else: t300[name] = mileage
-            sorted_json=dict(sorted(t300.items(), key=lambda item: item[1], reverse=True))
-            file.seek(0)
-            file.truncate()
-            json.dump(sorted_json, file, indent=4)
+            with open('standings/T300.json', 'r+') as file:
+                t300=json.load(file)
+                #update mileages
+                if name in t300: t300[name] += mileage
+                else: t300[name] = mileage
+                sorted_json=dict(sorted(t300.items(), key=lambda item: item[1], reverse=True))
+                file.seek(0)
+                file.truncate()
+                json.dump(sorted_json, file, indent=4)
 def updateT400(table,dist):
     #TODO: add partial distances
     finishers = table.loc[table['Status']=='Complete']
@@ -108,79 +117,69 @@ def updateGarmin(table,dist):
             file.truncate()
             json.dump(sorted_json, file, indent=4)
 
-def getResults(event,year,dist):
-    url = "http://edsresults.com/{}{}/index.php?search_type=race_results&event={}&gender=&results_per_page=1000/".format(event,str(year)[-2:],dist)
+def getResults(event,dist):
+    if not (t4 or g): return
+    url = "http://edsresults.com/{}{}/index.php?search_type=race_results&event={}&gender=&results_per_page=1000/".format(event,str(cur_year)[-2:],dist)
     page = requests.get(url).content
     table = pd.read_html(StringIO(str(bs(page,features="lxml").find_all('table',{'id':'data'}))))[0]
-    if t3: updateT300(table,dist)
     if t4: updateT400(table,dist)
     if  g: updateGarmin(table,dist)
-def getResultsRocky(year,event,dist):
-    url = "http://edsresults.com/{}rr{}/index.php?search_type=race_results&event={}&gender=&results_per_page=1000".format(year,event,dist)
+def getResultsRocky(event,dist):
+    if not (t4 or g): return
+    url = "http://edsresults.com/{}rr{}/index.php?search_type=race_results&event={}&gender=&results_per_page=1000".format(cur_year,event,dist)
     page = requests.get(url).content
     table = pd.read_html(StringIO(str(bs(page,features="lxml").find_all('table',{'id':'data'}))))[0]
-    if t3: updateT300(table,dist)
     if t4: updateT400(table,dist)
     if  g: updateGarmin(table,dist)
+
+if t3: updateT300()
 
 #Get Bandera results
-#b_y = str(cur_year if days > 20 else cur_year-1)[-2:]
 if days > 20:
-    getResults("bandera",cur_year,"100K")
-    getResults("bandera",cur_year,"50K")
-    getResults("bandera",cur_year,"Saturday+50K")
+    getResults("bandera","100K")
+    getResults("bandera","50K")
+    getResults("bandera","Saturday+50K")
 
 #Get Rocky Raccoon results
-#rr_y = cur_year if days > 50 else cur_year-1
 if days > 50:
-    getResultsRocky(cur_year,100,'100M')
-    getResultsRocky(cur_year,100,'100K')
-    getResultsRocky(cur_year,50,'50M')
-    getResultsRocky(cur_year,50,'50K')
+    getResultsRocky(100,'100M')
+    getResultsRocky(100,'100K')
+    getResultsRocky(50,'50M')
+    getResultsRocky(50,'50K')
 
 #Get Great Springs Austin results
-#gsa_y = str(cur_year if days > 75 else cur_year-1)[-2:]
-if days > 75: getResults("austin",cur_year,'50K')
+if days > 75: getResults("austin",'50K')
 
 #Get Hells Hills results
-#hh_y = str(cur_year if days > 100 else cur_year-1)[-2:]
 if days > 100:
-    getResults("hh",cur_year,'50M')
-    getResults("hh",cur_year,'50K')
+    getResults("hh",'50M')
+    getResults("hh",'50K')
 
 #Get Pandora results
-#pb_y = str(cur_year if days > 120 else cur_year-1)[-2:]
-if days > 120: getResults("rox",cur_year,'52.4M')
+if days > 120: getResults("rox",'52.4M')
 
 #Get Dirt Fest results
-#df_y = str(cur_year if days > 135 else cur_year-1)[-2:]
-if days > 135: getResults("dirtfest",cur_year,'50K')
+if days > 135: getResults("dirtfest",'50K')
 
 #Get River's Edge results
-#re_y = str(cur_year if days > 150 else cur_year-1)[-2:]
-if days > 150: getResults("edge",cur_year,'50K')
+if days > 150: getResults("edge",'50K')
 
 #Get Great Springs Canyon Lake results
-#gscl_y = str(cur_year if days > 160 else cur_year-1)[-2:]
-if days > 160: getResults("canyonlake",cur_year,'50K')
+if days > 160: getResults("canyonlake",'50K')
 
 #Get Trailway results
-#tt_y = str(cur_year if days > 290 else cur_year-1)[-2:]
-if days > 290: getResults("trailway",cur_year,'50K')
+if days > 290: getResults("trailway",'50K')
 
 
 #Get Cactus Rose results
-#cr_y = str(cur_year if days > 305 else cur_year-1)[-2:]
 if days > 305:
-    getResults("cr",cur_year,'100M')
-    getResults("cr",cur_year,'50M')
+    getResults("cr",'100M')
+    getResults("cr",'50M')
 
 #Get Wild Hare results
-#wh_y = str(cur_year if days > 325 else cur_year-1)[-2:]
 if days > 325:
-    getResults("wildhare",cur_year,'50M')
-    getResults("wildhare",cur_year,'50K')
+    getResults("wildhare",'50M')
+    getResults("wildhare",'50K')
 
 #Get Mosaic results
-#m_y = str(cur_year if days > 345 else cur_year-1)[-2:]
-if days > 345: getResults("mosaic",cur_year,'50K')
+if days > 345: getResults("mosaic",'50K')
