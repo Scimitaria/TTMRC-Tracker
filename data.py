@@ -9,58 +9,101 @@ from bs4 import BeautifulSoup as bs # type: ignore
 pd.set_option('display.max_rows',None)
 
 #Create empty JSON data
-with open('T400.json', 'w') as file: json.dump({},file,indent=4) 
+with open('standings/T400.json', 'w') as file: json.dump({},file,indent=4)
+with open('standings/T400.json', 'w') as file: json.dump({},file,indent=4)
+with open('standings/Garmin.json', 'w') as file: json.dump({},file,indent=4) 
 
 cur_year = date.today().year
 days = date.today().timetuple().tm_yday
+
+def partialMileage(dist,splits):
+    #TODO: figure out the mess that is 100M and 50M
+    #TODO: make sure all 100K and 50K splits are equal
+    if splits == 0: return 0
+    elif '100K' in dist: return (splits/4)*62.1
+    elif '50K' in dist: return (splits/2)*31.1
+
+def updateT300(table,dist):
+    #TODO: add call with prior year's data
+    finishers = table.loc[table['Status']=='Complete']
+
+    for index,table in list(finishers.iterrows()):
+        data=str(table).splitlines()[:-1]
+        name = (str(data[4].split(" ")[-1])+" "+str(data[5].split(" ")[-1])).lower()
+        mileage=0
+        if   "100M" in dist: mileage+=100
+        elif "100K" in dist: mileage+=62.1
+        elif "50M" in dist: mileage+=50
+        elif "50K" in dist: mileage+=31.1
+
+        with open('T300.json', 'r+') as file:
+            t300=json.load(file)
+            #update mileages
+            if name in t300: t300[name] += mileage
+            else: t300[name] = mileage
+            sorted_json=dict(sorted(t300.items(), key=lambda item: item[1], reverse=True))
+            file.seek(0)
+            file.truncate()
+            json.dump(sorted_json, file, indent=4)
+def updateT400(table,dist):
+    #TODO: add partial distances
+    finishers = table.loc[table['Status']=='Complete']
+
+    for index,table in list(finishers.iterrows()):
+        data=str(table).splitlines()[:-1]
+        name = (str(data[4].split(" ")[-1])+" "+str(data[5].split(" ")[-1])).lower()
+        mileage=0
+        if   "100M" in dist: mileage+=100
+        elif "100K" in dist: mileage+=62.1
+        elif "50M" in dist: mileage+=50
+        elif "50K" in dist: mileage+=31.1
+
+        with open('standings/T400.json', 'r+') as file:
+            t400=json.load(file)
+            #update mileages
+            if name in t400: t400[name] += mileage
+            else: t400[name] = mileage
+            sorted_json=dict(sorted(t400.items(), key=lambda item: item[1], reverse=True))
+            file.seek(0)
+            file.truncate()
+            json.dump(sorted_json, file, indent=4)
+def updateGarmin(table,dist):
+    #TODO: add short distances
+    finishers = table.loc[table['Status']=='Complete']
+
+    for index,table in list(finishers.iterrows()):
+        data=str(table).splitlines()[:-1]
+        name = (str(data[4].split(" ")[-1])+" "+str(data[5].split(" ")[-1])).lower()
+        mileage=0
+        if   "100M" in dist: mileage+=100
+        elif "100K" in dist: mileage+=62.1
+        elif "50M" in dist: mileage+=50
+        elif "50K" in dist: mileage+=31.1
+
+        with open('standings/Garmin.json', 'r+') as file:
+            garmin=json.load(file)
+            #update mileages
+            if name in garmin: garmin[name] += mileage
+            else: garmin[name] = mileage
+            sorted_json=dict(sorted(garmin.items(), key=lambda item: item[1], reverse=True))
+            file.seek(0)
+            file.truncate()
+            json.dump(sorted_json, file, indent=4)
 
 def getResults(event,year,dist):
     url = "http://edsresults.com/{}{}/index.php?search_type=race_results&event={}&gender=&results_per_page=1000/".format(event,str(year)[-2:],dist)
     page = requests.get(url).content
     table = pd.read_html(StringIO(str(bs(page,features="lxml").find_all('table',{'id':'data'}))))[0]
-    finishers = table.loc[table['Status']=='Complete']
-    for index,table in list(finishers.iterrows()):
-        data=str(table).splitlines()[:-1]
-        name = (str(data[4].split(" ")[-1])+" "+str(data[5].split(" ")[-1])).lower()
-        mileage=0
-        if   "100M" in dist: mileage+=100
-        elif "100K" in dist: mileage+=62.1
-        elif "50M" in dist: mileage+=50
-        elif "50K" in dist: mileage+=31.1
-
-        with open('T400.json', 'r+') as file:
-            t400=json.load(file)
-            #update mileages
-            if name in t400: t400[name] += mileage
-            else: t400[name] = mileage
-            sorted_json=dict(sorted(t400.items(), key=lambda item: item[1], reverse=True))
-            file.seek(0)
-            file.truncate()
-            json.dump(sorted_json, file, indent=4)
-
+    #updateT300(table,dist)
+    updateT400(table,dist)
+    #updateGarmin(table,dist)
 def getResultsRocky(year,event,dist):
     url = "http://edsresults.com/{}rr{}/index.php?search_type=race_results&event={}&gender=&results_per_page=1000".format(year,event,dist)
     page = requests.get(url).content
     table = pd.read_html(StringIO(str(bs(page,features="lxml").find_all('table',{'id':'data'}))))[0]
-    finishers = table.loc[table['Status']=='Complete']
-    for index,table in list(finishers.iterrows()):
-        data=str(table).splitlines()[:-1]
-        name = (str(data[4].split(" ")[-1])+" "+str(data[5].split(" ")[-1])).lower()
-        mileage=0
-        if   "100M" in dist: mileage+=100
-        elif "100K" in dist: mileage+=62.1
-        elif "50M" in dist: mileage+=50
-        elif "50K" in dist: mileage+=31.1
-
-        with open('T400.json', 'r+') as file:
-            t400=json.load(file)
-            #update mileages
-            if name in t400: t400[name] += mileage
-            else: t400[name] = mileage
-            sorted_json=dict(sorted(t400.items(), key=lambda item: item[1], reverse=True))
-            file.seek(0)
-            file.truncate()
-            json.dump(sorted_json, file, indent=4)
+    #updateT300(table,dist)
+    updateT400(table,dist)
+    #updateGarmin(table,dist)
 
 #Get Bandera results
 #b_y = str(cur_year if days > 20 else cur_year-1)[-2:]
