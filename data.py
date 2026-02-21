@@ -92,23 +92,22 @@ def updateT400(table,dist):
             file.truncate()
             json.dump(sorted_json, file, indent=4)
 def updateGarmin(table,dist):
-    #TODO: add short distances
     finishers = table.loc[table['Status']=='Complete']
 
     for index,table in list(finishers.iterrows()):
         data=str(table).splitlines()[:-1]
         name = (str(data[4].split(" ")[-1])+" "+str(data[5].split(" ")[-1])).lower()
-        mileage=0
-        if   "100M" in dist: mileage+=100
-        elif "100K" in dist: mileage+=62.1
-        elif "50M" in dist: mileage+=50
-        elif "50K" in dist: mileage+=31.1
+        points=0
+        if any(word in dist for word in ['100','52.4M','50M']): points+=4
+        elif any(word in dist for word in ['50K','25M','20M','25K','13.1M','10M']): points+=3
+        elif any(word in dist for word in ['15K','8M','10K','5M']): points+=2
+        else: points += 1
 
         with open('standings/Garmin.json', 'r+') as file:
             garmin=json.load(file)
             #update mileages
-            if name in garmin: garmin[name] += mileage
-            else: garmin[name] = mileage
+            if name in garmin: garmin[name] += points
+            else: garmin[name] = points
             sorted_json=dict(sorted(garmin.items(), key=lambda item: item[1], reverse=True))
             file.seek(0)
             file.truncate()
@@ -136,6 +135,7 @@ if days > 20:
     getResults("bandera","100K")
     getResults("bandera","50K")
     getResults("bandera","Saturday+50K")
+    if g: getResults("bandera","25K")
 
 #Get Rocky Raccoon results
 if days > 50:
@@ -143,40 +143,102 @@ if days > 50:
     getResultsRocky(100,'100K')
     getResultsRocky(50,'50M')
     getResultsRocky(50,'50K')
+    if g: getResultsRocky(50,'13.1M')
 
 #Get Great Springs Austin results
-if days > 75: getResults("austin",'50K')
+if days > 75: 
+    getResults("austin",'50K')
+    if g:
+        getResults("austin",'26.2M')
+        getResults("austin",'13.1M')
+        getResults("austin",'10K')
+        getResults("austin",'5K')
+
+#Get Hippo results
+if days > 90 and g:
+    getResults("hippo","26.2M")
+    getResults("hippo","13.1M")
+    getResults("hippo","10K")
+    getResults("hippo","5K")
 
 #Get Hells Hills results
 if days > 100:
     getResults("hh",'50M')
     getResults("hh",'50K')
+    if g:
+        getResults("hh",'25K')
+        getResults("hh",'10K')
 
 #Get Pandora results
-if days > 120: getResults("rox",'52.4M')
+if days > 120: 
+    getResults("rox",'52.4M')
+    if g:
+        getResults("rox",'26.2M')
+        getResults("rox",'13.1M')
+        getResults("rox",'8M')
+        getResults("rox",'4M')
 
 #Get Dirt Fest results
-if days > 135: getResults("dirtfest",'50K')
+if days > 135: 
+    getResults("dirtfest",'50K')
+    if g:
+        getResults("dirtfest",'25K')
+        getResults("dirtfest",'5M')
 
 #Get River's Edge results
-if days > 150: getResults("edge",'50K')
+if days > 150: 
+    getResults("edge",'50K')
+    if g:
+        getResults("edge",'25K')
+        getResults("edge",'10M')
+        getResults("edge",'5M')
 
 #Get Great Springs Canyon Lake results
-if days > 160: getResults("canyonlake",'50K')
+if days > 160: 
+    getResults("canyonlake",'50K')
+    if g:
+        getResults("canyonlake",'25K')
+        getResults("canyonlake",'10K')
+        getResults("canyonlake",'5K')
+
+#Get Mellow results
+if days > 260 and g:
+    getResults("mellow",'5K')
+    getResults("mellow",'10K')
+    getResults("mellow",'13.1M')
+    getResults("mellow",'26.2M')
 
 #Get Trailway results
-if days > 290: getResults("trailway",'50K')
-
+if days > 290: 
+    getResults("trailway",'50K')
+    if g:
+        getResults("trailway",'5K')
+        getResults("trailway",'10K')
+        getResults("trailway",'13.1M')
+        getResults("trailway",'26.2M')
 
 #Get Cactus Rose results
 if days > 305:
     getResults("cr",'100M')
     getResults("cr",'50M')
+    if g:
+        getResults("cr",'25M')
+        getResults("cr",'5M')
 
 #Get Wild Hare results
 if days > 325:
     getResults("wildhare",'50M')
     getResults("wildhare",'50K')
+    if g:
+        getResults("wildhare",'25K')
+        getResults("wildhare",'10K')
 
 #Get Mosaic results
-if days > 345: getResults("mosaic",'50K')
+if days > 345: 
+    getResults("mosaic",'50K')
+    if g:
+        getResults("mosaic",'5K')
+        getResults("mosaic",'10K')
+        getResults("mosaic",'15K')
+        getResults("mosaic",'13.1M')
+        getResults("mosaic",'26.2M')
