@@ -34,14 +34,70 @@ if  g:
 cur_year = date.today().year
 days = date.today().timetuple().tm_yday
 
-def partialMileage(dist,splits):
-    #TODO: figure out the mess that is 100M and 50M
-    #TODO: make sure all 100K and 50K splits are equal
-    m=0
+def partialMileage(dist,splits,event):
     if splits == 0: return 0
-    elif '100K' in dist: m = (splits/4)*62.1
-    elif '50K' in dist: m = (splits/2)*31.1
-    return 0 if m < 26.2 else m
+    match event:
+        case "bandera":
+            match splits:
+                case 2: return 31.1
+                case 3: return 52.3
+                case 4: return 62.2
+                case _: return 0
+        case 100: #Rocky 100
+            match dist,splits:
+                case "100M",3: return 29.1
+                case "100M",4: return 40
+                case "100M",5: return 49.1
+                case "100M",6: return 60
+                case "100M",7: return 69.1
+                case "100M",8: return 80
+                case "100M",9: return 89.1
+                case "100M",10: return 100
+                case "100K",3: return 31.3
+                case "100K",4: return 42.2
+                case "100K",5: return 51.2
+                case "100K",6: return 62.1
+                case _: return 0
+        case 50: #Rocky 50
+            match dist,splits:
+                case "50M",4: return 33.4
+                case "50M",5: return 39
+                case "50M",6: return 50.1
+                case "50K",4: return 31.3
+                case _: return 0
+        case "hh": #Hells Hills 50M
+            match splits:
+                case 3: return 50
+                case 2: return 33.7
+                case _: return 0
+        case "pandora":
+            match splits:
+                case 4: return 52.4
+                case 3: return 39.3
+                case 2: return 26.2
+                case _: return 0
+        case "cr": #Cactus Rose
+            match splits:
+                case 3: return 40.1
+                case 4: return 50
+                case 5: return 59.9
+                case 6: return 75
+                case 7: return 90.1
+                case 8: return 100
+                case _: return 0
+        case "wildhare":
+            match splits:
+                case 6: return 50
+                case 5: return 41.7
+                case 4: return 33.3
+                case _: return 0
+        case "mosaic":
+            match splits:
+                case 9: return 28
+                case 10: return 31.1
+                case _: return 0
+        #Events w/ all splits less than marathon
+        case _: return 0
 
 def updateT300():
     page1 = requests.get("http://edsresults.com/cr{}/index.php?search_type=race_results&event=100M&gender=&results_per_page=1000".format(str(cur_year-1)[-2:])).content
@@ -52,11 +108,11 @@ def updateT300():
     table3 = pd.read_html(StringIO(str(bs(page3,features="lxml").find_all('table',{'id':'data'}))))[0]
     page4 = requests.get("http://edsresults.com/{}rr100/index.php?search_type=race_results&event=100K&gender=&results_per_page=1000".format(str(cur_year))).content
     table4 = pd.read_html(StringIO(str(bs(page4,features="lxml").find_all('table',{'id':'data'}))))[0]
-    tables = [[table1,'100M'],[table2,'100K'],[table3,'100M'],[table4,'100K']]
-    for table,dist in tables:
+    tables = [table1,table2,table3,table4]
+    for table in tables:
         finishers = table.loc[table['Status']=='Complete']
 
-        for index,table in list(finishers.iterrows()):
+        for _,table in list(finishers.iterrows()):
             data=str(table).splitlines()[:-1]
             name = (str(data[4].split(" ")[-1])+" "+str(data[5].split(" ")[-1])).lower()
 
@@ -69,11 +125,9 @@ def updateT300():
                 file.seek(0)
                 file.truncate()
                 json.dump(sorted_json, file, indent=4)
-def updateT400(table,dist):
-    #TODO: add partial distances
-    finishers = table.loc[table['Status']=='Complete']
-
-    for index,table in list(finishers.iterrows()):
+def updateT400(t,dist,event):
+    finishers = t.loc[t['Status']=='Complete']
+    for _,table in list(finishers.iterrows()):
         data=str(table).splitlines()[:-1]
         name = (str(data[4].split(" ")[-1])+" "+str(data[5].split(" ")[-1])).lower()
         mileage=0
@@ -91,10 +145,27 @@ def updateT400(table,dist):
             file.seek(0)
             file.truncate()
             json.dump(sorted_json, file, indent=4)
+
+    incomplete = t.loc[t['Status']=='DNF']
+    for _,table in list(incomplete.iterrows()):
+        data=str(table).splitlines()[:-1]
+        name = (str(data[4].split(" ")[-1])+" "+str(data[5].split(" ")[-1])).lower()
+        i = 12 if event in [100,50] else 10
+        mileage=partialMileage(dist,int(data[i].split(" ")[-1]),event)
+        if mileage > 0:
+            with open('standings/T400.json', 'r+') as file:
+                t400=json.load(file)
+                #update mileages
+                if name in t400: t400[name] += mileage
+                else: t400[name] = mileage
+                sorted_json=dict(sorted(t400.items(), key=lambda item: item[1], reverse=True))
+                file.seek(0)
+                file.truncate()
+                json.dump(sorted_json, file, indent=4)
 def updateGarmin(table,dist):
     finishers = table.loc[table['Status']=='Complete']
 
-    for index,table in list(finishers.iterrows()):
+    for _,table in list(finishers.iterrows()):
         data=str(table).splitlines()[:-1]
         name = (str(data[4].split(" ")[-1])+" "+str(data[5].split(" ")[-1])).lower()
         points=0
@@ -118,14 +189,14 @@ def getResults(event,dist):
     url = "http://edsresults.com/{}{}/index.php?search_type=race_results&event={}&gender=&results_per_page=1000/".format(event,str(cur_year)[-2:],dist)
     page = requests.get(url).content
     table = pd.read_html(StringIO(str(bs(page,features="lxml").find_all('table',{'id':'data'}))))[0]
-    if t4: updateT400(table,dist)
+    if t4 and event not in ["hippo","mellow"]: updateT400(table,dist,event)
     if  g: updateGarmin(table,dist)
 def getResultsRocky(event,dist):
     if not (t4 or g): return
     url = "http://edsresults.com/{}rr{}/index.php?search_type=race_results&event={}&gender=&results_per_page=1000".format(cur_year,event,dist)
     page = requests.get(url).content
     table = pd.read_html(StringIO(str(bs(page,features="lxml").find_all('table',{'id':'data'}))))[0]
-    if t4: updateT400(table,dist)
+    if t4: updateT400(table,dist,event)
     if  g: updateGarmin(table,dist)
 
 if t3: updateT300()
