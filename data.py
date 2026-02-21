@@ -1,4 +1,6 @@
+import sys
 import json
+import getopt
 import requests # type: ignore
 from io import StringIO
 from datetime import date
@@ -8,10 +10,26 @@ from bs4 import BeautifulSoup as bs # type: ignore
 # prevents pandas from cutting data
 pd.set_option('display.max_rows',None)
 
+t3 = t4 = g = False
+
+#flags
+try:(lst,args) = getopt.getopt(sys.argv[1:],"a34g",["all =","t300 =","t400 =","garmin ="])
+except:print("Error parsing flags")
+for (opt,val) in lst:
+    if opt in ['-a','--all']:
+        t3 = t4 = g = True
+        break
+    if opt in ['-3','--t300']: t3 = True
+    if opt in ['-4','--t400']: t4 = True
+    if opt in ['-g','--garmin']: g= True
+
 #Create empty JSON data
-with open('standings/T400.json', 'w') as file: json.dump({},file,indent=4)
-with open('standings/T400.json', 'w') as file: json.dump({},file,indent=4)
-with open('standings/Garmin.json', 'w') as file: json.dump({},file,indent=4) 
+if t3: 
+    with open('standings/T300.json', 'w') as file: json.dump({},file,indent=4)
+if t4: 
+    with open('standings/T400.json', 'w') as file: json.dump({},file,indent=4)
+if  g: 
+    with open('standings/Garmin.json', 'w') as file: json.dump({},file,indent=4) 
 
 cur_year = date.today().year
 days = date.today().timetuple().tm_yday
@@ -36,7 +54,7 @@ def updateT300(table,dist):
         elif "50M" in dist: mileage+=50
         elif "50K" in dist: mileage+=31.1
 
-        with open('T300.json', 'r+') as file:
+        with open('standings/T300.json', 'r+') as file:
             t300=json.load(file)
             #update mileages
             if name in t300: t300[name] += mileage
@@ -94,16 +112,16 @@ def getResults(event,year,dist):
     url = "http://edsresults.com/{}{}/index.php?search_type=race_results&event={}&gender=&results_per_page=1000/".format(event,str(year)[-2:],dist)
     page = requests.get(url).content
     table = pd.read_html(StringIO(str(bs(page,features="lxml").find_all('table',{'id':'data'}))))[0]
-    #updateT300(table,dist)
-    updateT400(table,dist)
-    #updateGarmin(table,dist)
+    if t3: updateT300(table,dist)
+    if t4: updateT400(table,dist)
+    if  g: updateGarmin(table,dist)
 def getResultsRocky(year,event,dist):
     url = "http://edsresults.com/{}rr{}/index.php?search_type=race_results&event={}&gender=&results_per_page=1000".format(year,event,dist)
     page = requests.get(url).content
     table = pd.read_html(StringIO(str(bs(page,features="lxml").find_all('table',{'id':'data'}))))[0]
-    #updateT300(table,dist)
-    updateT400(table,dist)
-    #updateGarmin(table,dist)
+    if t3: updateT300(table,dist)
+    if t4: updateT400(table,dist)
+    if  g: updateGarmin(table,dist)
 
 #Get Bandera results
 #b_y = str(cur_year if days > 20 else cur_year-1)[-2:]
