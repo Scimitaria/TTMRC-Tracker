@@ -1,3 +1,4 @@
+import json
 import requests # type: ignore
 from io import StringIO
 from datetime import date
@@ -7,11 +8,34 @@ from bs4 import BeautifulSoup as bs # type: ignore
 # prevents pandas from cutting data
 pd.set_option('display.max_rows',None)
 
+#clear JSON log
+t400=[]
+with open('T400.json', 'w') as file: json.dump(t400,file,indent=4) 
+
 cur_year = date.today().year
 days = date.today().timetuple().tm_yday
 
 def getResults(event,year,dist):
     url = "http://edsresults.com/{}{}/index.php?search_type=race_results&event={}&gender=&results_per_page=1000/".format(event,year,dist)
+    page = requests.get(url).content
+    table = pd.read_html(StringIO(str(bs(page,features="lxml").find_all('table',{'id':'data'}))))[0]
+    finishers = table.loc[table['Status']=='Complete']
+    for index,table in list(finishers.iterrows()):
+        data=str(table).splitlines()[:-1]
+        n = (str(data[4].split(" ")[-1])+" "+str(data[5].split(" ")[-1])).lower()
+        m=0
+        if   "100M" in dist: m+=100
+        elif "100K" in dist: m+=62.1
+        elif "50M" in dist: m+=50
+        elif "50K" in dist: m+=31.1
+
+        with open('T400.json', 'r+') as file:
+            if n in t400: t400[n] += m
+            else: t400.append({n:m})
+            json.dump(t400,file,indent=4)
+
+def getResultsRocky(year,event,dist):
+    url = "http://edsresults.com/{}rr{}/index.php?search_type=race_results&event={}&gender=&results_per_page=1000".format(year,event,dist)
     page = requests.get(url).content
     table = pd.read_html(StringIO(str(bs(page,features="lxml").find_all('table',{'id':'data'}))))[0]
     finishers = table.loc[table['Status']=='Complete']
@@ -24,20 +48,11 @@ def getResults(event,year,dist):
         elif "50M" in dist: m+=50
         elif "50K" in dist: m+=31.1
 
-def getResultsRocky(year,event,dist):
-    url = "http://edsresults.com/{}rr{}/index.php?search_type=race_results&event={}&gender=&results_per_page=1000".format(year,event,dist)
-    page = requests.get(url).content
-    table = pd.read_html(StringIO(str(bs(page,features="lxml").find_all('table',{'id':'data'}))))[0]
-    finishers = table.loc[table['Status']=='Complete']
-    for index,table in list(finishers.iterrows()):
-        data=str(table).splitlines()[:-1]
-        print(str(data[4].split(" ")[-1]),str(data[5].split(" ")[-1]))
-
 #Get Bandera results
 b_y = str(cur_year if days > 20 else cur_year-1)[-2:]
-#getResults("bandera",b_y,"100K")
-#getResults("bandera",b_y,"50K")
-#getResults("bandera",b_y,"Saturday+50K")
+getResults("bandera",b_y,"100K")
+getResults("bandera",b_y,"50K")
+getResults("bandera",b_y,"Saturday+50K")
 
 #Get Rocky Raccoon results
 rr_y = cur_year if days > 50 else cur_year-1
@@ -89,11 +104,3 @@ wh_y = str(cur_year if days > 325 else cur_year-1)[-2:]
 #Get Mosaic results
 m_y = str(cur_year if days > 345 else cur_year-1)[-2:]
 #getResults("mosaic",m_y,'50K')
-
-
-# Deprecated due to being short #
-#Get Hippo results
-#h_y = str(cur_year if days > 90 else cur_year-1)[-2:]
-#Get Mellow results
-#m_y = str(cur_year if days > 260 else cur_year-1)[-2:]
-#mellowMar = requests.get("http://edsresults.com/mellow{}/index.php?search_type=race_results&event=26.2M&gender=&results_per_page=400".format(m_y))
