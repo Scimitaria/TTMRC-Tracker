@@ -59,15 +59,12 @@ def updateT300():
         for index,table in list(finishers.iterrows()):
             data=str(table).splitlines()[:-1]
             name = (str(data[4].split(" ")[-1])+" "+str(data[5].split(" ")[-1])).lower()
-            mileage=0
-            if   "100M" in dist: mileage+=100
-            elif "100K" in dist: mileage+=62.1
 
             with open('standings/T300.json', 'r+') as file:
                 t300=json.load(file)
                 #update mileages
-                if name in t300: t300[name] += mileage
-                else: t300[name] = mileage
+                if name in t300: t300[name] += 1
+                else: t300[name] = 1
                 sorted_json=dict(sorted(t300.items(), key=lambda item: item[1], reverse=True))
                 file.seek(0)
                 file.truncate()
