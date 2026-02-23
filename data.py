@@ -10,10 +10,13 @@ from bs4 import BeautifulSoup as bs # type: ignore
 # prevents pandas from cutting data
 pd.set_option('display.max_rows',None)
 
+cur_year = date.today().year
+days = date.today().timetuple().tm_yday
+
 t3 = t4 = g = False
 
 #flags
-try:(lst,args) = getopt.getopt(sys.argv[1:],"a34g",["all =","t300 =","t400 =","garmin ="])
+try:(lst,args) = getopt.getopt(sys.argv[1:],"a34gr",["all =","t300 =","t400 =","garmin =","reset ="])
 except:print("Error parsing flags")
 for (opt,val) in lst:
     if opt in ['-a','--all']:
@@ -22,17 +25,17 @@ for (opt,val) in lst:
     if opt in ['-3','--t300']: t3 = True
     if opt in ['-4','--t400']: t4 = True
     if opt in ['-g','--garmin']: g= True
+    if opt in ['-r','--reset']:
+        with open('standings/T300.json', 'w') as file: json.dump({},file,indent=4)
+        with open('standings/T400.json', 'w') as file: json.dump({},file,indent=4)
+        with open('standings/Garmin.json', 'w') as file: json.dump({},file,indent=4)
+        with open('log.txt', 'w') as f: f.write(str(cur_year))
 
-#Create empty JSON data
-if t3: 
-    with open('standings/T300.json', 'w') as file: json.dump({},file,indent=4)
-if t4: 
-    with open('standings/T400.json', 'w') as file: json.dump({},file,indent=4)
-if  g: 
-    with open('standings/Garmin.json', 'w') as file: json.dump({},file,indent=4) 
-
-cur_year = date.today().year
-days = date.today().timetuple().tm_yday
+#overwrite log if new year
+with open('log.txt', 'r') as f: log=f.read()
+if str(cur_year) not in log:
+    with open('log.txt', 'w') as f:f.write(str(cur_year))
+    log=''
 
 def partialMileage(dist,splits,event):
     if splits == 0: return 0
@@ -203,113 +206,153 @@ if t3: updateT300()
 
 #Get Bandera results
 if days > 20:
-    getResults("bandera","100K")
-    getResults("bandera","50K")
-    getResults("bandera","Saturday+50K")
-    if g: getResults("bandera","25K")
+    if not 'bandera' in log:
+        getResults("bandera","100K")
+        getResults("bandera","50K")
+        getResults("bandera","Saturday+50K")
+        with open('log.txt', 'a') as f: f.write('bandera')
+    if g and not 'banderag' in log: 
+        getResults("bandera","25K")
+        with open('log.txt', 'a') as f: f.write('banderag')
 
 #Get Rocky Raccoon results
 if days > 50:
-    getResultsRocky(100,'100M')
-    getResultsRocky(100,'100K')
-    getResultsRocky(50,'50M')
-    getResultsRocky(50,'50K')
-    if g: getResultsRocky(50,'13.1M')
+    if not 'rocky' in log:
+        getResultsRocky(100,'100M')
+        getResultsRocky(100,'100K')
+        getResultsRocky(50,'50M')
+        getResultsRocky(50,'50K')
+        with open('log.txt', 'a') as f: f.write('rocky')
+    if g and not 'rockyg' in log:
+        getResultsRocky(50,'13.1M')
+        with open('log.txt', 'a') as f: f.write('rockyg')
 
 #Get Great Springs Austin results
-if days > 75: 
-    getResults("austin",'50K')
-    if g:
+if days > 75:
+    if not 'austin' in log: 
+        getResults("austin",'50K')
+        with open('log.txt', 'a') as f: f.write('austin')
+    if g and not 'austing' in log:
         getResults("austin",'26.2M')
         getResults("austin",'13.1M')
         getResults("austin",'10K')
         getResults("austin",'5K')
+        with open('log.txt', 'a') as f: f.write('austing')
 
 #Get Hippo results
-if days > 90 and g:
+if days > 90 and g and not 'hippo' in log:
     getResults("hippo","26.2M")
     getResults("hippo","13.1M")
     getResults("hippo","10K")
     getResults("hippo","5K")
+    with open('log.txt', 'a') as f: f.write('hippo')
 
 #Get Hells Hills results
 if days > 100:
-    getResults("hh",'50M')
-    getResults("hh",'50K')
-    if g:
+    if not 'hellshills' in log:
+        getResults("hh",'50M')
+        getResults("hh",'50K')
+        with open('log.txt', 'a') as f: f.write('hellshills')
+    if g and not 'hellshillsg' in log:
         getResults("hh",'25K')
         getResults("hh",'10K')
+        with open('log.txt', 'a') as f: f.write('hellshillsg')
 
 #Get Pandora results
-if days > 120: 
-    getResults("rox",'52.4M')
-    if g:
+if days > 120:
+    if not 'pandora' in log:
+        getResults("rox",'52.4M')
+        with open('log.txt', 'a') as f: f.write('pandora')
+    if g and not 'pandorag' in log:
         getResults("rox",'26.2M')
         getResults("rox",'13.1M')
         getResults("rox",'8M')
         getResults("rox",'4M')
+        with open('log.txt', 'a') as f: f.write('pandorag')
 
 #Get Dirt Fest results
 if days > 135: 
-    getResults("dirtfest",'50K')
-    if g:
+    if not 'dirtfest' in log:
+        getResults("dirtfest",'50K')
+        with open('log.txt', 'a') as f: f.write('dirtfest')
+    if g and not 'dirtfestg' in log:
         getResults("dirtfest",'25K')
         getResults("dirtfest",'5M')
+        with open('log.txt', 'a') as f: f.write('dirtfestg')
 
 #Get River's Edge results
 if days > 150: 
-    getResults("edge",'50K')
-    if g:
+    if not 'edge' in log:
+        getResults("edge",'50K')
+        with open('log.txt', 'a') as f: f.write('edge')
+    if g and not 'edgeg' in log:
         getResults("edge",'25K')
         getResults("edge",'10M')
         getResults("edge",'5M')
+        with open('log.txt', 'a') as f: f.write('edgeg')
 
 #Get Great Springs Canyon Lake results
 if days > 160: 
-    getResults("canyonlake",'50K')
-    if g:
+    if not 'canyon' in log:
+        getResults("canyonlake",'50K')
+        with open('log.txt', 'a') as f: f.write('canyon')
+    if g and not 'canyong' in log:
         getResults("canyonlake",'25K')
         getResults("canyonlake",'10K')
         getResults("canyonlake",'5K')
+        with open('log.txt', 'a') as f: f.write('canyong')
 
 #Get Mellow results
-if days > 260 and g:
+if days > 260 and g and not 'mellow' in log:
     getResults("mellow",'5K')
     getResults("mellow",'10K')
     getResults("mellow",'13.1M')
     getResults("mellow",'26.2M')
+    with open('log.txt', 'a') as f: f.write('mellow')
 
 #Get Trailway results
 if days > 290: 
-    getResults("trailway",'50K')
-    if g:
+    if not 'trailway' in log:
+        getResults("trailway",'50K')
+        with open('log.txt', 'a') as f: f.write('trailway')
+    if g and not 'trailwayg' in log:
         getResults("trailway",'5K')
         getResults("trailway",'10K')
         getResults("trailway",'13.1M')
         getResults("trailway",'26.2M')
+        with open('log.txt', 'a') as f: f.write('trailwayg')
 
 #Get Cactus Rose results
 if days > 305:
-    getResults("cr",'100M')
-    getResults("cr",'50M')
-    if g:
+    if not 'cactus' in log:
+        getResults("cr",'100M')
+        getResults("cr",'50M')
+        with open('log.txt', 'a') as f: f.write('cactus')
+    if g and not 'cactusg' in log:
         getResults("cr",'25M')
         getResults("cr",'5M')
+        with open('log.txt', 'a') as f: f.write('cactusg')
 
 #Get Wild Hare results
 if days > 325:
-    getResults("wildhare",'50M')
-    getResults("wildhare",'50K')
-    if g:
+    if not 'wildhare' in log:
+        getResults("wildhare",'50M')
+        getResults("wildhare",'50K')
+        with open('log.txt', 'a') as f: f.write('wildhare')
+    if g and not 'wildhareg' in log:
         getResults("wildhare",'25K')
         getResults("wildhare",'10K')
+        with open('log.txt', 'a') as f: f.write('hellshillsg')
 
 #Get Mosaic results
 if days > 345: 
-    getResults("mosaic",'50K')
-    if g:
+    if not 'mosaic' in log:
+        getResults("mosaic",'50K')
+        with open('log.txt', 'a') as f: f.write('mosaic')
+    if g and not 'mosaicg' in log:
         getResults("mosaic",'5K')
         getResults("mosaic",'10K')
         getResults("mosaic",'15K')
         getResults("mosaic",'13.1M')
         getResults("mosaic",'26.2M')
+        with open('log.txt', 'a') as f: f.write('mosaicg')
