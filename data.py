@@ -34,7 +34,10 @@ for (opt,val) in lst:
 #overwrite log if new year
 with open('log.txt', 'r') as f: log=f.read()
 if str(cur_year) not in log:
-    with open('log.txt', 'w') as f:f.write(str(cur_year))
+    with open('standings/T300.json', 'w') as file: json.dump({},file,indent=4)
+    with open('standings/T400.json', 'w') as file: json.dump({},file,indent=4)
+    with open('standings/Garmin.json', 'w') as file: json.dump({},file,indent=4)
+    with open('log.txt', 'w') as f: f.write(str(cur_year))
     log=''
 
 def partialMileage(dist,splits,event):
