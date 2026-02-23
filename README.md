@@ -7,3 +7,4 @@ https://www.tejastrails.com/challenge
 #### -3, --t300: run Tejas 300 Challenge
 #### -4, --t400: run Tejas 400 Challenge
 #### -g, --garmin: run Garmin Challenge
+#### -r, --reset: reset all files and run the program from scratch
