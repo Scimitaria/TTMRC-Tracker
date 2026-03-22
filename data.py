@@ -1,4 +1,3 @@
-import sys
 import json
 import argparse
 import requests # type: ignore
@@ -146,8 +145,8 @@ def updateT400(t,dist,event):
         with open('standings/T400.json', 'r+') as file:
             t400=json.load(file)
             #update mileages
-            if name in t400: t400[name] += mileage
-            else: t400[name] = mileage
+            if name in t400: t400[name] = round(t400[name]+mileage,1)
+            else: t400[name] = round(mileage,1)
             sorted_json=dict(sorted(t400.items(), key=lambda item: item[1], reverse=True))
             file.seek(0)
             file.truncate()
@@ -163,8 +162,8 @@ def updateT400(t,dist,event):
             with open('standings/T400.json', 'r+') as file:
                 t400=json.load(file)
                 #update mileages
-                if name in t400: t400[name] += mileage
-                else: t400[name] = mileage
+                if name in t400: round(t400[name]+mileage,1)
+                else: t400[name] = round(mileage,1)
                 sorted_json=dict(sorted(t400.items(), key=lambda item: item[1], reverse=True))
                 file.seek(0)
                 file.truncate()
