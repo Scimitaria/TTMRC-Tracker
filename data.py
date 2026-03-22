@@ -1,6 +1,6 @@
 import sys
 import json
-import getopt
+import argparse
 import requests # type: ignore
 from io import StringIO
 from datetime import date
@@ -13,23 +13,24 @@ pd.set_option('display.max_rows',None)
 cur_year = date.today().year
 days = date.today().timetuple().tm_yday
 
-t3 = t4 = g = False
-
 #flags
-try:(lst,args) = getopt.getopt(sys.argv[1:],"a34gr",["all =","t300 =","t400 =","garmin =","reset ="])
-except:print("Error parsing flags")
-for (opt,val) in lst:
-    if opt in ['-a','--all']:
-        t3 = t4 = g = True
-        break
-    if opt in ['-3','--t300']: t3 = True
-    if opt in ['-4','--t400']: t4 = True
-    if opt in ['-g','--garmin']: g= True
-    if opt in ['-r','--reset']:
-        with open('standings/T300.json', 'w') as file: json.dump({},file,indent=4)
-        with open('standings/T400.json', 'w') as file: json.dump({},file,indent=4)
-        with open('standings/Garmin.json', 'w') as file: json.dump({},file,indent=4)
-        with open('log.txt', 'w') as f: f.write(str(cur_year))
+parser = argparse.ArgumentParser()
+parser.add_argument("-a", "--all", action="store_true")
+parser.add_argument("-3", "--t300", action="store_true")
+parser.add_argument("-4", "--t400", action="store_true")
+parser.add_argument("-g", "--garmin", action="store_true")
+parser.add_argument("-r", "--reset", action="store_true")
+args = parser.parse_args()
+
+t3 = args.all or args.t300
+t4 = args.all or args.t400
+g = args.all or args.garmin
+
+if args.reset:
+    with open('standings/T300.json', 'w') as file: json.dump({},file,indent=4)
+    with open('standings/T400.json', 'w') as file: json.dump({},file,indent=4)
+    with open('standings/Garmin.json', 'w') as file: json.dump({},file,indent=4)
+    with open('log.txt', 'w') as f: f.write(str(cur_year))
 
 #overwrite log if new year
 with open('log.txt', 'r') as f: log=f.read()
@@ -195,7 +196,7 @@ def getResults(event,dist):
     url = "http://edsresults.com/{}{}/index.php?search_type=race_results&event={}&gender=&results_per_page=1000/".format(event,str(cur_year)[-2:],dist)
     page = requests.get(url).content
     table = pd.read_html(StringIO(str(bs(page,features="lxml").find_all('table',{'id':'data'}))))[0]
-    if t4 and event not in ["hippo","mellow"]: updateT400(table,dist,event)
+    if t4 and event not in ["mellow"]: updateT400(table,dist,event)
     if  g: updateGarmin(table,dist)
 def getResultsRocky(event,dist):
     if not (t4 or g): return
@@ -244,8 +245,9 @@ if days > 75:
 
 #Get Hippo results
 if days > 90 and g and not 'hippo' in log:
-    getResults("hippo","26.2M")
-    getResults("hippo","13.1M")
+    getResults("hippo","50K")
+    getResults("hippo","20M")
+    getResults("hippo","10M")
     getResults("hippo","10K")
     getResults("hippo","5K")
     with open('log.txt', 'a') as f: f.write('hippo')
