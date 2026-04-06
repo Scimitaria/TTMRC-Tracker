@@ -1,3 +1,4 @@
+import sys
 import json
 import argparse
 import requests # type: ignore
@@ -74,7 +75,7 @@ def partialMileage(dist,splits,event):
         case "hh": #Hells Hills 50M
             match splits:
                 case 3: return 50
-                case 2: return 33.7
+                case 2: return 33.3
                 case _: return 0
         case "pandora":
             match splits:
@@ -176,9 +177,30 @@ def updateGarmin(table,dist):
         name = (str(data[4].split(" ")[-1])+" "+str(data[5].split(" ")[-1])).lower()
         points=0
         if any(word in dist for word in ['100','52.4M','50M']): points+=4
-        elif any(word in dist for word in ['50K','25M','20M','25K','13.1M','10M']): points+=3
+        elif any(word in dist for word in ['50K','25M','20M','16M','25K','13.1M','10M']): points+=3
         elif any(word in dist for word in ['15K','8M','10K','5M']): points+=2
         else: points += 1
+
+        with open('standings/Garmin.json', 'r+') as file:
+            garmin=json.load(file)
+            #update mileages
+            if name in garmin: garmin[name] += points
+            else: garmin[name] = points
+            sorted_json=dict(sorted(garmin.items(), key=lambda item: item[1], reverse=True))
+            file.seek(0)
+            file.truncate()
+            json.dump(sorted_json, file, indent=4)
+def updateLMS(table,dist):
+    finishers = table.loc[table['Laps Complete']>0]
+    for _,table in list(finishers.iterrows()):
+        data=str(table).splitlines()[:-1]
+        name = (str(data[3].split(" ")[-1])+" "+str(data[4].split(" ")[-1])).lower()
+        points=1
+        laps = float(data[8].split(" ")[-1])
+        sum=laps*dist
+        if sum >= 5: points+=1
+        if sum >= 10: points+=1
+        if sum >= 40: points+=1
 
         with open('standings/Garmin.json', 'r+') as file:
             garmin=json.load(file)
@@ -195,7 +217,7 @@ def getResults(event,dist):
     url = "http://edsresults.com/{}{}/index.php?search_type=race_results&event={}&gender=&results_per_page=1000/".format(event,str(cur_year)[-2:],dist)
     page = requests.get(url).content
     table = pd.read_html(StringIO(str(bs(page,features="lxml").find_all('table',{'id':'data'}))))[0]
-    if t4 and event not in ["mellow"]: updateT400(table,dist,event)
+    if t4 and event not in ["mellow","cavern","sanmarcos"]: updateT400(table,dist,event)
     if  g: updateGarmin(table,dist)
 def getResultsRocky(event,dist):
     if not (t4 or g): return
@@ -204,6 +226,22 @@ def getResultsRocky(event,dist):
     table = pd.read_html(StringIO(str(bs(page,features="lxml").find_all('table',{'id':'data'}))))[0]
     if t4: updateT400(table,dist,event)
     if  g: updateGarmin(table,dist)
+def getResultsLMS(event):
+    #if not g: return
+    dist=""
+    match event:
+        case "caverns":
+            url = "http://edsresults.com/{}lps{}/index.php?search_type=race_results&event=Last+Person+Standing&gender=&results_per_page=1000/".format(event,str(cur_year)[-2:])
+            page = requests.get(url).content
+            table = pd.read_html(StringIO(str(bs(page,features="lxml").find_all('table',{'id':'data'}))))[0]
+            updateLMS(table,4.1667)
+            url = "http://edsresults.com/{}lps{}/index.php?search_type=race_results&event=Last+Person+Standing+Ruck&gender=&results_per_page=1000/".format(event,str(cur_year)[-2:])
+            page = requests.get(url).content
+            table = pd.read_html(StringIO(str(bs(page,features="lxml").find_all('table',{'id':'data'}))))[0]
+            updateLMS(table,2.47)
+    
+if not (t3 or t4 or g):
+    sys.exit(0)
 
 if t3: updateT300()
 
@@ -314,6 +352,14 @@ if days > 260 and g and not 'mellow' in log:
     getResults("mellow",'26.2M')
     with open('log.txt', 'a') as f: f.write('mellow')
 
+#Get GSA Natural Bridge Caverns results
+if days > 275 and g and not 'cavern' in log:
+    getResults("caverns",'16M')
+    getResults("caverns",'8M')
+    getResults("caverns",'4M')
+    getResultsLMS("caverns")
+    with open('log.txt', 'a') as f: f.write('cavern')
+
 #Get Trailway results
 if days > 290: 
     if not 'trailway' in log:
@@ -325,6 +371,13 @@ if days > 290:
         getResults("trailway",'13.1M')
         getResults("trailway",'26.2M')
         with open('log.txt', 'a') as f: f.write('trailwayg')
+
+#Get GSA San Marcos results
+if days > 295 and g and not 'sanmarcos' in log:
+    getResults("greatsprings",'26.2M')
+    getResults("greatsprings",'13.1M')
+    getResults("greatsprings",'10K')
+    with open('log.txt', 'a') as f: f.write('sanmarcos')
 
 #Get Cactus Rose results
 if days > 305:
