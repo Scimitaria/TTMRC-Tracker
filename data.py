@@ -211,6 +211,16 @@ def updateLMS(table,dist):
             file.seek(0)
             file.truncate()
             json.dump(sorted_json, file, indent=4)
+        if sum >= 31.1:
+            with open('standings/T400.json', 'r+') as file:
+                t400=json.load(file)
+                #update mileages
+                if name in t400: t400[name] = round(t400[name]+sum,1)
+                else: t400[name] = round(sum,1)
+                sorted_json=dict(sorted(t400.items(), key=lambda item: item[1], reverse=True))
+                file.seek(0)
+                file.truncate()
+                json.dump(sorted_json, file, indent=4)
 
 def getResults(event,dist):
     if not (t4 or g): return
@@ -353,12 +363,15 @@ if days > 260 and g and not 'mellow' in log:
     with open('log.txt', 'a') as f: f.write('mellow')
 
 #Get GSA Natural Bridge Caverns results
-if days > 275 and g and not 'cavern' in log:
-    getResults("caverns",'16M')
-    getResults("caverns",'8M')
-    getResults("caverns",'4M')
-    getResultsLMS("caverns")
-    with open('log.txt', 'a') as f: f.write('cavern')
+if days > 275:
+    if t4 and not "cavern" in log:
+        getResults("caverns",'16M')
+        getResults("caverns",'8M')
+        getResults("caverns",'4M')
+        with open('log.txt', 'a') as f: f.write('cavern')
+    if g and not 'clms' in log:
+        getResultsLMS("caverns")
+        with open('log.txt', 'a') as f: f.write('clms')
 
 #Get Trailway results
 if days > 290: 
