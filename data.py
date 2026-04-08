@@ -142,6 +142,7 @@ def updateT400(t,dist,event):
         elif "100K" in dist: mileage+=62.1
         elif "50M" in dist: mileage+=50
         elif "50K" in dist: mileage+=31.1
+        else: return
 
         with open('standings/T400.json', 'r+') as file:
             t400=json.load(file)
