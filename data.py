@@ -163,7 +163,7 @@ def updateT400(t,dist,event):
             with open('standings/T400.json', 'r+') as file:
                 t400=json.load(file)
                 #update mileages
-                if name in t400: round(t400[name]+mileage,1)
+                if name in t400: t400[name] = round(t400[name]+mileage,1)
                 else: t400[name] = round(mileage,1)
                 sorted_json=dict(sorted(t400.items(), key=lambda item: item[1], reverse=True))
                 file.seek(0)
@@ -177,7 +177,7 @@ def updateGarmin(table,dist):
         name = (str(data[4].split(" ")[-1])+" "+str(data[5].split(" ")[-1])).lower()
         points=0
         if any(word in dist for word in ['100','52.4M','50M']): points+=4
-        elif any(word in dist for word in ['50K','25M','20M','16M','25K','13.1M','10M']): points+=3
+        elif any(word in dist for word in ['50K','26.2M','25M','20M','16M','25K','13.1M','10M']): points+=3
         elif any(word in dist for word in ['15K','8M','10K','5M']): points+=2
         else: points += 1
 
@@ -300,15 +300,15 @@ if days > 90 and g and not 'hippo' in log:
     with open('log.txt', 'a') as f: f.write('hippo')
 
 #Get Hells Hills results
-if days > 100:
-    if not 'hellshills' in log:
-        getResults("hh",'50M')
-        getResults("hh",'50K')
-        with open('log.txt', 'a') as f: f.write('hellshills')
-    if g and not 'hellshillsg' in log:
-        getResults("hh",'25K')
-        getResults("hh",'10K')
-        with open('log.txt', 'a') as f: f.write('hellshillsg')
+#if days > 100:
+if not 'hellshills' in log:
+    getResults("hh",'50M')
+    getResults("hh",'50K')
+    with open('log.txt', 'a') as f: f.write('hellshills')
+if g and not 'hellshillsg' in log:
+    getResults("hh",'25K')
+    getResults("hh",'10K')
+    with open('log.txt', 'a') as f: f.write('hellshillsg')
 
 #Get Pandora results
 if days > 120:
