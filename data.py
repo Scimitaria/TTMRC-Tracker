@@ -81,7 +81,6 @@ def partialMileage(dist,splits,event):
             match splits:
                 case 4: return 52.4
                 case 3: return 39.3
-                case 2: return 26.2
                 case _: return 0
         case "cr": #Cactus Rose
             match splits:
@@ -172,12 +171,12 @@ def updateT400(t,dist,event):
                 file.seek(0)
                 file.truncate()
                 json.dump(sorted_json, file, indent=4)
-def updateGarmin(table,dist):
+def updateGarmin(table,dist,event):
     finishers = table.loc[table['Status']=='Complete']
 
     for _,table in list(finishers.iterrows()):
         data=str(table).splitlines()[:-1]
-        name = (str(data[4].split(" ")[-1])+" "+str(data[5].split(" ")[-1])).lower()
+        name = (str(data[3].split(" ")[-1])+" "+str(data[4].split(" ")[-1])).lower() if event in ["rox"] else (str(data[4].split(" ")[-1])+" "+str(data[5].split(" ")[-1])).lower()
         points=0
         if any(word in dist for word in ['100','52.4M','50M']): points+=4
         elif any(word in dist for word in ['50K','26.2M','25M','20M','16M','25K','13.1M','10M']): points+=3
@@ -231,14 +230,14 @@ def getResults(event,dist):
     page = requests.get(url).content
     table = pd.read_html(StringIO(str(bs(page,features="lxml").find_all('table',{'id':'data'}))))[0]
     if t4 and event not in ["mellow","cavern","sanmarcos"]: updateT400(table,dist,event)
-    if  g: updateGarmin(table,dist)
+    if  g: updateGarmin(table,dist,event)
 def getResultsRocky(event,dist):
     if not (t4 or g): return
     url = "http://edsresults.com/{}rr{}/index.php?search_type=race_results&event={}&gender=&results_per_page=1000".format(cur_year,event,dist)
     page = requests.get(url).content
     table = pd.read_html(StringIO(str(bs(page,features="lxml").find_all('table',{'id':'data'}))))[0]
     if t4: updateT400(table,dist,event)
-    if  g: updateGarmin(table,dist)
+    if  g: updateGarmin(table,dist,event)
 def getResultsLMS(event):
     #if not g: return
     dist=""
@@ -314,16 +313,16 @@ if days > 100:
         with open('log.txt', 'a') as f: f.write('hellshillsg')
 
 #Get Pandora results
-if days > 120:
-    if not 'pandora' in log:
-        getResults("rox",'52.4M')
-        with open('log.txt', 'a') as f: f.write('pandora')
-    if g and not 'pandorag' in log:
-        getResults("rox",'26.2M')
-        getResults("rox",'13.1M')
-        getResults("rox",'8M')
-        getResults("rox",'4M')
-        with open('log.txt', 'a') as f: f.write('pandorag')
+#if days > 120:
+if not 'pandora' in log:
+    getResults("rox",'52.4M')
+    with open('log.txt', 'a') as f: f.write('pandora')
+if g and not 'pandorag' in log:
+    getResults("rox",'26.2M')
+    getResults("rox",'13.1M')
+    getResults("rox",'8M')
+    getResults("rox",'4M')
+    with open('log.txt', 'a') as f: f.write('pandorag')
 
 #Get Dirt Fest results
 if days > 135: 
