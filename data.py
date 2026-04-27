@@ -77,7 +77,7 @@ def partialMileage(dist,splits,event):
                 case 3: return 50
                 case 2: return 33.3
                 case _: return 0
-        case "pandora":
+        case "rox":
             match splits:
                 case 4: return 52.4
                 case 3: return 39.3
@@ -137,10 +137,11 @@ def updateT400(t,dist,event):
     finishers = t.loc[t['Status']=='Complete']
     for _,table in list(finishers.iterrows()):
         data=str(table).splitlines()[:-1]
-        name = (str(data[4].split(" ")[-1])+" "+str(data[5].split(" ")[-1])).lower()
+        name = (str(data[3].split(" ")[-1])+" "+str(data[4].split(" ")[-1])).lower() if event in ["rox"] else (str(data[4].split(" ")[-1])+" "+str(data[5].split(" ")[-1])).lower()
         mileage=0
         if   "100M" in dist: mileage+=100
         elif "100K" in dist: mileage+=62.1
+        elif "52.4M"in dist: mileage+=52.4
         elif "50M" in dist: mileage+=50
         elif "50K" in dist: mileage+=31.1
         else: return
@@ -158,8 +159,8 @@ def updateT400(t,dist,event):
     incomplete = t.loc[t['Status']=='DNF']
     for _,table in list(incomplete.iterrows()):
         data=str(table).splitlines()[:-1]
-        name = (str(data[4].split(" ")[-1])+" "+str(data[5].split(" ")[-1])).lower()
-        i = 12 if event in [100,50] else 10
+        name = (str(data[3].split(" ")[-1])+" "+str(data[4].split(" ")[-1])).lower() if event in ["rox"] else (str(data[4].split(" ")[-1])+" "+str(data[5].split(" ")[-1])).lower()
+        i = 12 if event in [100,50] else 8 if event in ["rox"] else 10
         mileage=partialMileage(dist,int(data[i].split(" ")[-1]),event)
         if mileage > 0:
             with open('standings/T400.json', 'r+') as file:
@@ -302,15 +303,15 @@ if days > 90 and g and not 'hippo' in log:
     with open('log.txt', 'a') as f: f.write('hippo')
 
 #Get Hells Hills results
-#if days > 100:
-if not 'hellshills' in log:
-    getResults("hh",'50M')
-    getResults("hh",'50K')
-    with open('log.txt', 'a') as f: f.write('hellshills')
-if g and not 'hellshillsg' in log:
-    getResults("hh",'25K')
-    getResults("hh",'10K')
-    with open('log.txt', 'a') as f: f.write('hellshillsg')
+if days > 100:
+    if not 'hellshills' in log:
+        getResults("hh",'50M')
+        getResults("hh",'50K')
+        with open('log.txt', 'a') as f: f.write('hellshills')
+    if g and not 'hellshillsg' in log:
+        getResults("hh",'25K')
+        getResults("hh",'10K')
+        with open('log.txt', 'a') as f: f.write('hellshillsg')
 
 #Get Pandora results
 if days > 120:
