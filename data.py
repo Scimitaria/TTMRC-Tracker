@@ -107,6 +107,7 @@ def partialMileage(dist,splits,event):
         case _: return 0
 
 def updateT300():
+    with open('standings/T300.json', 'w') as file: json.dump({},file,indent=4)
     page1 = requests.get("http://edsresults.com/cr{}/index.php?search_type=race_results&event=100M&gender=&results_per_page=1000".format(str(cur_year-1)[-2:])).content
     table1 = pd.read_html(StringIO(str(bs(page1,features="lxml").find_all('table',{'id':'data'}))))[0]
     page2 = requests.get("http://edsresults.com/bandera{}/index.php?search_type=race_results&event=100K&gender=&results_per_page=1000".format(str(cur_year)[-2:])).content
