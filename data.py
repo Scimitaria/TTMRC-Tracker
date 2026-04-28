@@ -297,6 +297,7 @@ if days > 90 and g and not 'hippo' in log:
     getResults("hippo","50K")
     getResults("hippo","20M")
     getResults("hippo","10M")
+    getResults("hippo","10M+Ruck")
     getResults("hippo","10K")
     getResults("hippo","5K")
     with open('log.txt', 'a') as f: f.write('hippo')
@@ -309,20 +310,21 @@ if days > 100:
         with open('log.txt', 'a') as f: f.write('hellshills')
     if g and not 'hellshillsg' in log:
         getResults("hh",'25K')
+        getResults("hh",'25K+Ruck')
         getResults("hh",'10K')
         with open('log.txt', 'a') as f: f.write('hellshillsg')
 
 #Get Pandora results
-#if days > 120:
-if not 'pandora' in log:
-    getResults("rox",'52.4M')
-    with open('log.txt', 'a') as f: f.write('pandora')
-if g and not 'pandorag' in log:
-    getResults("rox",'26.2M')
-    getResults("rox",'13.1M')
-    getResults("rox",'8M')
-    getResults("rox",'4M')
-    with open('log.txt', 'a') as f: f.write('pandorag')
+if days > 120:
+    if not 'pandora' in log:
+        getResults("rox",'52.4M')
+        with open('log.txt', 'a') as f: f.write('pandora')
+    if g and not 'pandorag' in log:
+        getResults("rox",'26.2M')
+        getResults("rox",'13.1M')
+        getResults("rox",'8M')
+        getResults("rox",'4M')
+        with open('log.txt', 'a') as f: f.write('pandorag')
 
 #Get Dirt Fest results
 if days > 135: 
