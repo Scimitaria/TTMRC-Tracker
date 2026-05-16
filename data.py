@@ -213,7 +213,7 @@ def updateLMS(table,dist):
             file.seek(0)
             file.truncate()
             json.dump(sorted_json, file, indent=4)
-        if sum >= 31.1:
+        if sum >= 26.2:
             with open('standings/T400.json', 'r+') as file:
                 t400=json.load(file)
                 #update mileages
