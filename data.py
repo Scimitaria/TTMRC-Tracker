@@ -77,7 +77,7 @@ def partialMileage(dist,splits,event):
                 case 3: return 50
                 case 2: return 33.3
                 case _: return 0
-        case "rox":
+        case "rox": #Pandora's Box
             match splits:
                 case 4: return 52.4
                 case 3: return 39.3
@@ -133,10 +133,11 @@ def updateT300():
                 file.truncate()
                 json.dump(sorted_json, file, indent=4)
 def updateT400(t,dist,event):
+    [f,l] = [3,4] if event in ["edge"] else [4,5]
     finishers = t.loc[t['Status']=='Complete']
     for _,table in list(finishers.iterrows()):
         data=str(table).splitlines()[:-1]
-        name = (str(data[3].split(" ")[-1])+" "+str(data[4].split(" ")[-1])).lower() if event in ["rox"] else (str(data[4].split(" ")[-1])+" "+str(data[5].split(" ")[-1])).lower()
+        name = (str(data[f].split(" ")[-1])+" "+str(data[l].split(" ")[-1])).lower()
         mileage=0
         if   "100M" in dist: mileage+=100
         elif "100K" in dist: mileage+=62.1
@@ -155,28 +156,30 @@ def updateT400(t,dist,event):
             file.truncate()
             json.dump(sorted_json, file, indent=4)
 
-    incomplete = t.loc[t['Status']=='DNF']
-    for _,table in list(incomplete.iterrows()):
-        data=str(table).splitlines()[:-1]
-        name = (str(data[3].split(" ")[-1])+" "+str(data[4].split(" ")[-1])).lower() if event in ["rox"] else (str(data[4].split(" ")[-1])+" "+str(data[5].split(" ")[-1])).lower()
-        i = 12 if event in [100,50] else 8 if event in ["rox"] else 10
-        mileage=partialMileage(dist,int(data[i].split(" ")[-1]),event)
-        if mileage > 0:
-            with open('standings/T400.json', 'r+') as file:
-                t400=json.load(file)
-                #update mileages
-                if name in t400: t400[name] = round(t400[name]+mileage,1)
-                else: t400[name] = round(mileage,1)
-                sorted_json=dict(sorted(t400.items(), key=lambda item: item[1], reverse=True))
-                file.seek(0)
-                file.truncate()
-                json.dump(sorted_json, file, indent=4)
+    if event not in ["edge"]:
+        incomplete = t.loc[t['Status']=='DNF']
+        for _,table in list(incomplete.iterrows()):
+            data=str(table).splitlines()[:-1]
+            name = (str(data[f].split(" ")[-1])+" "+str(data[l].split(" ")[-1])).lower()
+            i = 12 if event in [100,50] else 10
+            mileage=partialMileage(dist,int(data[i].split(" ")[-1]),event)
+            if mileage > 0:
+                with open('standings/T400.json', 'r+') as file:
+                    t400=json.load(file)
+                    #update mileages
+                    if name in t400: t400[name] = round(t400[name]+mileage,1)
+                    else: t400[name] = round(mileage,1)
+                    sorted_json=dict(sorted(t400.items(), key=lambda item: item[1], reverse=True))
+                    file.seek(0)
+                    file.truncate()
+                    json.dump(sorted_json, file, indent=4)
 def updateGarmin(table,dist,event):
+    [f,l] = [3,4] if event in ["edge"] else [4,5]
     finishers = table.loc[table['Status']=='Complete']
 
     for _,table in list(finishers.iterrows()):
         data=str(table).splitlines()[:-1]
-        name = (str(data[3].split(" ")[-1])+" "+str(data[4].split(" ")[-1])).lower() if event in ["rox"] else (str(data[4].split(" ")[-1])+" "+str(data[5].split(" ")[-1])).lower()
+        name = (str(data[f].split(" ")[-1])+" "+str(data[l].split(" ")[-1])).lower()
         points=0
         if any(word in dist for word in ['100','52.4M','50M']): points+=4
         elif any(word in dist for word in ['50K','26.2M','25M','20M','16M','25K','13.1M','10M']): points+=3
@@ -327,14 +330,15 @@ if days > 120:
         with open('log.txt', 'a') as f: f.write('pandorag')
 
 #Get Dirt Fest results
-if days > 135: 
-    if not 'dirtfest' in log:
-        getResults("dirtfest",'50K')
-        with open('log.txt', 'a') as f: f.write('dirtfest')
-    if g and not 'dirtfestg' in log:
-        getResults("dirtfest",'25K')
-        getResults("dirtfest",'5M')
-        with open('log.txt', 'a') as f: f.write('dirtfestg')
+#if days > 135:
+#    if not 'dirtfest' in log:
+#        getResults("dirtfest",'50K')
+#        with open('log.txt', 'a') as f: f.write('dirtfest')
+#    if g and not 'dirtfestg' in log:
+#        getResults("dirtfest",'25K')
+#        getResults("dirtfest",'10M')
+#        getResults("dirtfest",'5M')
+#        with open('log.txt', 'a') as f: f.write('dirtfestg')
 
 #Get River's Edge results
 if days > 150: 
