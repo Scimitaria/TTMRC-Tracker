@@ -133,7 +133,7 @@ def updateT300():
                 file.truncate()
                 json.dump(sorted_json, file, indent=4)
 def updateT400(t,dist,event):
-    [f,l] = [3,4] if event in ["edge"] else [4,5]
+    [f,l] = [3,4] if event in ["edge","canyonlake"] else [4,5]
     finishers = t.loc[t['Status']=='Complete']
     for _,table in list(finishers.iterrows()):
         data=str(table).splitlines()[:-1]
@@ -156,7 +156,7 @@ def updateT400(t,dist,event):
             file.truncate()
             json.dump(sorted_json, file, indent=4)
 
-    if event not in ["edge"]:
+    if event not in ["edge","canyonlake"]:
         incomplete = t.loc[t['Status']=='DNF']
         for _,table in list(incomplete.iterrows()):
             data=str(table).splitlines()[:-1]
@@ -174,7 +174,7 @@ def updateT400(t,dist,event):
                     file.truncate()
                     json.dump(sorted_json, file, indent=4)
 def updateGarmin(table,dist,event):
-    [f,l] = [3,4] if event in ["edge"] else [4,5]
+    [f,l] = [3,4] if event in ["edge","canyonlake"] else [4,5]
     finishers = table.loc[table['Status']=='Complete']
 
     for _,table in list(finishers.iterrows()):
@@ -216,7 +216,7 @@ def updateLMS(table,dist):
             file.seek(0)
             file.truncate()
             json.dump(sorted_json, file, indent=4)
-        if sum >= 26.2:
+        if sum > 26.2:
             with open('standings/T400.json', 'r+') as file:
                 t400=json.load(file)
                 #update mileages
@@ -341,7 +341,7 @@ if days > 120:
 #        with open('log.txt', 'a') as f: f.write('dirtfestg')
 
 #Get River's Edge results
-if days > 150: 
+if days > 150:
     if not 'edge' in log:
         getResults("edge",'50K')
         with open('log.txt', 'a') as f: f.write('edge')
@@ -352,7 +352,7 @@ if days > 150:
         with open('log.txt', 'a') as f: f.write('edgeg')
 
 #Get Great Springs Canyon Lake results
-if days > 160: 
+if days > 160:
     if not 'canyon' in log:
         getResults("canyonlake",'50K')
         with open('log.txt', 'a') as f: f.write('canyon')
