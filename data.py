@@ -105,17 +105,19 @@ def partialMileage(dist,splits,event):
         #Events w/ all splits less than marathon
         case _: return 0
 
+def getTable(url):
+    page = requests.get(url).content
+    table = pd.read_html(StringIO(str(bs(page,features="lxml").find_all('table',{'id':'data'}))))[0]
+    return table
+
 def updateT300():
     with open('standings/T300.json', 'w') as file: json.dump({},file,indent=4)
-    page1 = requests.get("http://edsresults.com/cr{}/index.php?search_type=race_results&event=100M&gender=&results_per_page=1000".format(str(cur_year-1)[-2:])).content
-    table1 = pd.read_html(StringIO(str(bs(page1,features="lxml").find_all('table',{'id':'data'}))))[0]
-    page2 = requests.get("http://edsresults.com/bandera{}/index.php?search_type=race_results&event=100K&gender=&results_per_page=1000".format(str(cur_year)[-2:])).content
-    table2 = pd.read_html(StringIO(str(bs(page2,features="lxml").find_all('table',{'id':'data'}))))[0]
-    page3 = requests.get("http://edsresults.com/{}rr100/index.php?search_type=race_results&event=100M&gender=&results_per_page=1000".format(str(cur_year))).content
-    table3 = pd.read_html(StringIO(str(bs(page3,features="lxml").find_all('table',{'id':'data'}))))[0]
-    page4 = requests.get("http://edsresults.com/{}rr100/index.php?search_type=race_results&event=100K&gender=&results_per_page=1000".format(str(cur_year))).content
-    table4 = pd.read_html(StringIO(str(bs(page4,features="lxml").find_all('table',{'id':'data'}))))[0]
-    tables = [table1,table2,table3,table4]
+    tables = [
+        getTable("http://edsresults.com/cr{}/index.php?search_type=race_results&event=100M&gender=&results_per_page=1000".format(str(cur_year-1)[-2:])),
+        getTable("http://edsresults.com/bandera{}/index.php?search_type=race_results&event=100K&gender=&results_per_page=1000".format(str(cur_year)[-2:])),
+        getTable("http://edsresults.com/{}rr100/index.php?search_type=race_results&event=100M&gender=&results_per_page=1000".format(str(cur_year))),
+        getTable("http://edsresults.com/{}rr100/index.php?search_type=race_results&event=100K&gender=&results_per_page=1000".format(str(cur_year)))
+    ]
     for table in tables:
         finishers = table.loc[table['Status']=='Complete']
 
@@ -133,7 +135,7 @@ def updateT300():
                 file.truncate()
                 json.dump(sorted_json, file, indent=4)
 def updateT400(t,dist,event):
-    [f,l] = [3,4] if event in ["edge","canyonlake"] else [4,5]
+    [f,l] = [3,4] if event in ["edge","canyonlake","caverns"] else [4,5]
     finishers = t.loc[t['Status']=='Complete']
     for _,table in list(finishers.iterrows()):
         data=str(table).splitlines()[:-1]
@@ -174,7 +176,7 @@ def updateT400(t,dist,event):
                     file.truncate()
                     json.dump(sorted_json, file, indent=4)
 def updateGarmin(table,dist,event):
-    [f,l] = [3,4] if event in ["edge","canyonlake"] else [4,5]
+    [f,l] = [3,4] if event in ["edge","canyonlake","caverns"] else [4,5]
     finishers = table.loc[table['Status']=='Complete']
 
     for _,table in list(finishers.iterrows()):
@@ -229,32 +231,23 @@ def updateLMS(table,dist):
 
 def getResults(event,dist):
     if not (t4 or g): return
-    url = "http://edsresults.com/{}{}/index.php?search_type=race_results&event={}&gender=&results_per_page=1000/".format(event,str(cur_year)[-2:],dist)
-    page = requests.get(url).content
-    table = pd.read_html(StringIO(str(bs(page,features="lxml").find_all('table',{'id':'data'}))))[0]
+    table = getTable("http://edsresults.com/{}{}/index.php?search_type=race_results&event={}&gender=&results_per_page=1000/".format(event,str(cur_year)[-2:],dist))
     if t4 and event not in ["mellow","cavern","sanmarcos"]: updateT400(table,dist,event)
     if  g: updateGarmin(table,dist,event)
 def getResultsRocky(event,dist):
     if not (t4 or g): return
-    url = "http://edsresults.com/{}rr{}/index.php?search_type=race_results&event={}&gender=&results_per_page=1000".format(cur_year,event,dist)
-    page = requests.get(url).content
-    table = pd.read_html(StringIO(str(bs(page,features="lxml").find_all('table',{'id':'data'}))))[0]
+    table = getTable("http://edsresults.com/{}rr{}/index.php?search_type=race_results&event={}&gender=&results_per_page=1000".format(cur_year,event,dist))
     if t4: updateT400(table,dist,event)
     if  g: updateGarmin(table,dist,event)
 def getResultsLMS(event):
     #if not g: return
-    dist=""
     match event:
         case "caverns":
-            url = "http://edsresults.com/{}lps{}/index.php?search_type=race_results&event=Last+Person+Standing&gender=&results_per_page=1000/".format(event,str(cur_year)[-2:])
-            page = requests.get(url).content
-            table = pd.read_html(StringIO(str(bs(page,features="lxml").find_all('table',{'id':'data'}))))[0]
+            table = getTable("https://edsresults.com/{}lps{}/index.php?search_type=race_results&event=LPS&gender=&results_per_page=1000".format(event,str(cur_year)[-2:]))
             updateLMS(table,4.1667)
-            url = "http://edsresults.com/{}lps{}/index.php?search_type=race_results&event=Last+Person+Standing+Ruck&gender=&results_per_page=1000/".format(event,str(cur_year)[-2:])
-            page = requests.get(url).content
-            table = pd.read_html(StringIO(str(bs(page,features="lxml").find_all('table',{'id':'data'}))))[0]
+            table = getTable("https://edsresults.com/{}lps{}/index.php?search_type=race_results&event=LPS+Ruck&gender=&results_per_page=1000/".format(event,str(cur_year)[-2:]))
             updateLMS(table,2.47)
-    
+
 if not (t3 or t4 or g):
     sys.exit(0)
 
