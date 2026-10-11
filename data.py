@@ -386,6 +386,18 @@ if days > 290:
         getResults("trailway",'26.2M')
         with open('log.txt', 'a') as f: f.write('trailwayg')
 
+#Frio Trio placeholder
+if not "frio" in log:
+    with open('standings/T400.json', 'r+') as file:
+        t400=json.load(file)
+        t400['chris powers']+=31.1
+        sorted_json=dict(sorted(t400.items(), key=lambda item: item[1], reverse=True))
+        file.seek(0)
+        file.truncate()
+        json.dump(sorted_json, file, indent=4)
+    with open('log.txt', 'a') as f: f.write('frio')
+
+
 #Get GSA San Marcos results
 if days > 295 and g and not 'sanmarcos' in log:
     getResults("greatsprings",'26.2M')
