@@ -41,6 +41,10 @@ if str(cur_year) not in log:
     with open('log.txt', 'w') as f: f.write(str(cur_year))
     log=''
 
+def fPrint(str):
+    #Overwrite all text on line
+    print(f"\r\033[K{str}",end="",flush=True)
+
 def partialMileage(dist,splits,event):
     if splits == 0: return 0
     match event:
@@ -230,16 +234,19 @@ def updateLMS(table,dist):
                 json.dump(sorted_json, file, indent=4)
 
 def getResults(event,dist):
+    fPrint(f"{event} {dist}")
     if not (t4 or g): return
     table = getTable("http://edsresults.com/{}{}/index.php?search_type=race_results&event={}&gender=&results_per_page=1000/".format(event,str(cur_year)[-2:],dist))
     if t4 and event not in ["mellow","cavern","sanmarcos"]: updateT400(table,dist,event)
     if  g: updateGarmin(table,dist,event)
 def getResultsRocky(event,dist):
+    fPrint(f"{event} {dist}")
     if not (t4 or g): return
     table = getTable("http://edsresults.com/{}rr{}/index.php?search_type=race_results&event={}&gender=&results_per_page=1000".format(cur_year,event,dist))
     if t4: updateT400(table,dist,event)
     if  g: updateGarmin(table,dist,event)
 def getResultsLMS(event):
+    fPrint(event)
     #if not g: return
     match event:
         case "caverns":
@@ -441,3 +448,7 @@ if days > 345:
         getResults("mosaic",'13.1M')
         getResults("mosaic",'26.2M')
         with open('log.txt', 'a') as f: f.write('mosaig')
+
+#Move to end of previous line
+#Sets up next command prompt
+fPrint(f"\033[A\033[999C")
