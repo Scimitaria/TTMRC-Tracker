@@ -260,9 +260,9 @@ if days > 20:
         getResults("bandera","50K")
         getResults("bandera","Saturday+50K")
         with open('log.txt', 'a') as f: f.write('bandera')
-    if g and not 'banderag' in log: 
+    if g and not 'banderg' in log: 
         getResults("bandera","25K")
-        with open('log.txt', 'a') as f: f.write('banderag')
+        with open('log.txt', 'a') as f: f.write('banderg')
 
 #Get Rocky Raccoon results
 if days > 50:
@@ -272,21 +272,21 @@ if days > 50:
         getResultsRocky(50,'50M')
         getResultsRocky(50,'50K')
         with open('log.txt', 'a') as f: f.write('rocky')
-    if g and not 'rockyg' in log:
+    if g and not 'rockg' in log:
         getResultsRocky(50,'13.1M')
-        with open('log.txt', 'a') as f: f.write('rockyg')
+        with open('log.txt', 'a') as f: f.write('rockg')
 
 #Get Great Springs Austin results
 if days > 75:
     if not 'austin' in log: 
         getResults("austin",'50K')
         with open('log.txt', 'a') as f: f.write('austin')
-    if g and not 'austing' in log:
+    if g and not 'austig' in log:
         getResults("austin",'26.2M')
         getResults("austin",'13.1M')
         getResults("austin",'10K')
         getResults("austin",'5K')
-        with open('log.txt', 'a') as f: f.write('austing')
+        with open('log.txt', 'a') as f: f.write('austig')
 
 #Get Hippo results
 if days > 90 and g and not 'hippo' in log:
@@ -304,23 +304,23 @@ if days > 100:
         getResults("hh",'50M')
         getResults("hh",'50K')
         with open('log.txt', 'a') as f: f.write('hellshills')
-    if g and not 'hellshillsg' in log:
+    if g and not 'hellshillg' in log:
         getResults("hh",'25K')
         getResults("hh",'25K+Ruck')
         getResults("hh",'10K')
-        with open('log.txt', 'a') as f: f.write('hellshillsg')
+        with open('log.txt', 'a') as f: f.write('hellshillg')
 
 #Get Pandora results
 if days > 120:
     if not 'pandora' in log:
         getResults("rox",'52.4M')
         with open('log.txt', 'a') as f: f.write('pandora')
-    if g and not 'pandorag' in log:
+    if g and not 'pandorg' in log:
         getResults("rox",'26.2M')
         getResults("rox",'13.1M')
         getResults("rox",'8M')
         getResults("rox",'4M')
-        with open('log.txt', 'a') as f: f.write('pandorag')
+        with open('log.txt', 'a') as f: f.write('pandorg')
 
 #Get Dirt Fest results
 #if days > 135:
@@ -338,22 +338,22 @@ if days > 150:
     if not 'edge' in log:
         getResults("edge",'50K')
         with open('log.txt', 'a') as f: f.write('edge')
-    if g and not 'edgeg' in log:
+    if g and not 'edg' in log:
         getResults("edge",'25K')
         getResults("edge",'10M')
         getResults("edge",'5M')
-        with open('log.txt', 'a') as f: f.write('edgeg')
+        with open('log.txt', 'a') as f: f.write('edg')
 
 #Get Great Springs Canyon Lake results
 if days > 160:
     if not 'canyon' in log:
         getResults("canyonlake",'50K')
         with open('log.txt', 'a') as f: f.write('canyon')
-    if g and not 'canyong' in log:
+    if g and not 'canyog' in log:
         getResults("canyonlake",'25K')
         getResults("canyonlake",'10K')
         getResults("canyonlake",'5K')
-        with open('log.txt', 'a') as f: f.write('canyong')
+        with open('log.txt', 'a') as f: f.write('canyog')
 
 #Get Mellow results
 if days > 260 and g and not 'mellow' in log:
@@ -375,16 +375,18 @@ if days > 275:
         with open('log.txt', 'a') as f: f.write('clms')
 
 #Get Trailway results
-if days > 290: 
-    if not 'trailway' in log:
-        getResults("trailway",'50K')
-        with open('log.txt', 'a') as f: f.write('trailway')
-    if g and not 'trailwayg' in log:
-        getResults("trailway",'5K')
-        getResults("trailway",'10K')
-        getResults("trailway",'13.1M')
-        getResults("trailway",'26.2M')
-        with open('log.txt', 'a') as f: f.write('trailwayg')
+#if days > 290: 
+if not 'trailway' in log:
+    getResults("trailway",'50K')
+    with open('log.txt', 'a') as f: f.write('trailway')
+if g and not 'trailwag' in log:
+    getResults("trailway",'5K')
+    getResults("trailway",'10K')
+    getResults("trailway",'10K+Ruck')
+    getResults("trailway",'13.1M')
+    getResults("trailway",'26.2M')
+    getResults("trailway",'26.2M+Ruck')
+    with open('log.txt', 'a') as f: f.write('trailwag')
 
 #Frio Trio placeholder
 if not "frio" in log:
@@ -411,10 +413,10 @@ if days > 305:
         getResults("cr",'100M')
         getResults("cr",'50M')
         with open('log.txt', 'a') as f: f.write('cactus')
-    if g and not 'cactusg' in log:
+    if g and not 'cactug' in log:
         getResults("cr",'25M')
         getResults("cr",'5M')
-        with open('log.txt', 'a') as f: f.write('cactusg')
+        with open('log.txt', 'a') as f: f.write('cactug')
 
 #Get Wild Hare results
 if days > 325:
@@ -422,20 +424,20 @@ if days > 325:
         getResults("wildhare",'50M')
         getResults("wildhare",'50K')
         with open('log.txt', 'a') as f: f.write('wildhare')
-    if g and not 'wildhareg' in log:
+    if g and not 'wildharg' in log:
         getResults("wildhare",'25K')
         getResults("wildhare",'10K')
-        with open('log.txt', 'a') as f: f.write('hellshillsg')
+        with open('log.txt', 'a') as f: f.write('wildharg')
 
 #Get Mosaic results
 if days > 345: 
     if not 'mosaic' in log:
         getResults("mosaic",'50K')
         with open('log.txt', 'a') as f: f.write('mosaic')
-    if g and not 'mosaicg' in log:
+    if g and not 'mosaig' in log:
         getResults("mosaic",'5K')
         getResults("mosaic",'10K')
         getResults("mosaic",'15K')
         getResults("mosaic",'13.1M')
         getResults("mosaic",'26.2M')
-        with open('log.txt', 'a') as f: f.write('mosaicg')
+        with open('log.txt', 'a') as f: f.write('mosaig')
