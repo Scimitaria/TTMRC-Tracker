@@ -206,22 +206,9 @@ def updateLMS(table,dist):
     for _,table in list(finishers.iterrows()):
         data=str(table).splitlines()[:-1]
         name = (str(data[3].split(" ")[-1])+" "+str(data[4].split(" ")[-1])).lower()
-        points=1
         laps = float(data[8].split(" ")[-1])
         sum=laps*dist
-        if sum >= 5: points+=1
-        if sum >= 10: points+=1
-        if sum >= 40: points+=1
 
-        with open('standings/Garmin.json', 'r+') as file:
-            garmin=json.load(file)
-            #update mileages
-            if name in garmin: garmin[name] += points
-            else: garmin[name] = points
-            sorted_json=dict(sorted(garmin.items(), key=lambda item: item[1], reverse=True))
-            file.seek(0)
-            file.truncate()
-            json.dump(sorted_json, file, indent=4)
         if sum > 26.2:
             with open('standings/T400.json', 'r+') as file:
                 t400=json.load(file)
@@ -382,18 +369,18 @@ if days > 275:
         with open('log.txt', 'a') as f: f.write('clms')
 
 #Get Trailway results
-#if days > 290: 
-if not 'trailway' in log:
-    getResults("trailway",'50K')
-    with open('log.txt', 'a') as f: f.write('trailway')
-if g and not 'trailwag' in log:
-    getResults("trailway",'5K')
-    getResults("trailway",'10K')
-    getResults("trailway",'10K+Ruck')
-    getResults("trailway",'13.1M')
-    getResults("trailway",'26.2M')
-    getResults("trailway",'26.2M+Ruck')
-    with open('log.txt', 'a') as f: f.write('trailwag')
+if days > 290: 
+    if not 'trailway' in log:
+        getResults("trailway",'50K')
+        with open('log.txt', 'a') as f: f.write('trailway')
+    if g and not 'trailwag' in log:
+        getResults("trailway",'5K')
+        getResults("trailway",'10K')
+        getResults("trailway",'10K+Ruck')
+        getResults("trailway",'13.1M')
+        getResults("trailway",'26.2M')
+        getResults("trailway",'26.2M+Ruck')
+        with open('log.txt', 'a') as f: f.write('trailwag')
 
 #Frio Trio placeholder
 if not "frio" in log:
@@ -408,11 +395,12 @@ if not "frio" in log:
 
 
 #Get GSA San Marcos results
-if days > 295 and g and not 'sanmarcos' in log:
-    getResults("greatsprings",'26.2M')
-    getResults("greatsprings",'13.1M')
-    getResults("greatsprings",'10K')
-    with open('log.txt', 'a') as f: f.write('sanmarcos')
+#That date ain't right...
+#if days > 295 and g and not 'sanmarcos' in log:
+#    getResults("greatsprings",'26.2M')
+#    getResults("greatsprings",'13.1M')
+#    getResults("greatsprings",'10K')
+#    with open('log.txt', 'a') as f: f.write('sanmarcos')
 
 #Get Cactus Rose results
 if days > 305:
