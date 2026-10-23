@@ -2,6 +2,7 @@ import sys, json, argparse, requests # type: ignore
 from io import StringIO
 from datetime import date
 import pandas as pd # type: ignore
+from concurrent.futures import ThreadPoolExecutor
 from bs4 import BeautifulSoup as bs # type: ignore
 
 # prevents pandas from cutting data
@@ -115,6 +116,7 @@ def getTable(url):
     return table
 
 def updateT300():
+    fPrint("T300")
     with open('standings/T300.json', 'w') as file: json.dump({},file,indent=4)
     t300 = {}
     tables = [
@@ -124,16 +126,18 @@ def updateT300():
         getTable("http://edsresults.com/{}rr100/index.php?search_type=race_results&event=100K&gender=&results_per_page=1000".format(str(cur_year)))
     ]
 
+    def score(x):
+        _,table = x
+        data=str(table).splitlines()[:-1]
+        name = (str(data[4].split(" ")[-1])+" "+str(data[5].split(" ")[-1])).lower()
+    
+        #update mileages
+        if name in t300: t300[name] += 1
+        else: t300[name] = 1
+
     for table in tables:
         finishers = table.loc[table['Status']=='Complete']
-
-        for _,table in list(finishers.iterrows()):
-            data=str(table).splitlines()[:-1]
-            name = (str(data[4].split(" ")[-1])+" "+str(data[5].split(" ")[-1])).lower()
-        
-            #update mileages
-            if name in t300: t300[name] += 1
-            else: t300[name] = 1
+        with ThreadPoolExecutor() as executor: executor.map(score,list(finishers.iterrows()))
 
     with open('standings/T300.json', 'w') as file:
         sorted_json=dict(sorted(t300.items(), key=lambda item: item[1], reverse=True))
@@ -144,7 +148,9 @@ def updateT400(t,dist,event):
     with open('standings/T400.json', 'r') as file: t400=json.load(file)
     [f,l] = [3,4] if event in ["edge","canyonlake","caverns"] else [4,5]
     finishers = t.loc[t['Status']=='Complete']
-    for _,table in list(finishers.iterrows()):
+
+    def score(x):
+        _,table = x
         data=str(table).splitlines()[:-1]
         name = (str(data[f].split(" ")[-1])+" "+str(data[l].split(" ")[-1])).lower()
         mileage=0
@@ -158,10 +164,11 @@ def updateT400(t,dist,event):
         #update mileages
         if name in t400: t400[name] = round(t400[name]+mileage,1)
         else: t400[name] = round(mileage,1)
+    with ThreadPoolExecutor() as executor: executor.map(score,list(finishers.iterrows()))
 
-    if event not in ["edge","canyonlake"]:
-        incomplete = t.loc[t['Status']=='DNF']
-        for _,table in list(incomplete.iterrows()):
+    if event not in ["edge","canyonlake"]: 
+        def score_partial(x):
+            _,table = x
             data=str(table).splitlines()[:-1]
             name = (str(data[f].split(" ")[-1])+" "+str(data[l].split(" ")[-1])).lower()
             i = 12 if event in [100,50] else 10
@@ -170,7 +177,10 @@ def updateT400(t,dist,event):
                     #update mileages
                     if name in t400: t400[name] = round(t400[name]+mileage,1)
                     else: t400[name] = round(mileage,1)
-                
+
+        incomplete = t.loc[t['Status']=='DNF']
+        with ThreadPoolExecutor() as executor: executor.map(score_partial,list(incomplete.iterrows()))
+
     with open('standings/T400.json', 'w') as file:
         file.seek(0)
         file.truncate()
@@ -181,7 +191,8 @@ def updateGarmin(table,dist,event):
     [f,l] = [3,4] if event in ["edge","canyonlake","caverns"] else [4,5]
     finishers = table.loc[table['Status']=='Complete']
 
-    for _,table in list(finishers.iterrows()):
+    def score(x):
+        _,table = x
         data=str(table).splitlines()[:-1]
         name = (str(data[f].split(" ")[-1])+" "+str(data[l].split(" ")[-1])).lower()
         points=0
@@ -194,6 +205,8 @@ def updateGarmin(table,dist,event):
         if name in garmin: garmin[name] += points
         else: garmin[name] = points
 
+    with ThreadPoolExecutor() as executor: executor.map(score,list(finishers.iterrows()))
+
     with open('standings/Garmin.json', 'w') as file:
         sorted_json=dict(sorted(garmin.items(), key=lambda item: item[1], reverse=True))
         file.seek(0)
@@ -202,7 +215,9 @@ def updateGarmin(table,dist,event):
 def updateLMS(table,dist):
     with open('standings/T400.json', 'r') as file: t400=json.load(file)
     finishers = table.loc[table['Laps Complete']>0]
-    for _,table in list(finishers.iterrows()):
+
+    def score(x):
+        _,table = x
         data=str(table).splitlines()[:-1]
         name = (str(data[3].split(" ")[-1])+" "+str(data[4].split(" ")[-1])).lower()
         laps = float(data[8].split(" ")[-1])
@@ -212,6 +227,8 @@ def updateLMS(table,dist):
             #update mileages
             if name in t400: t400[name] = round(t400[name]+sum,1)
             else: t400[name] = round(sum,1)
+
+    with ThreadPoolExecutor() as executor: executor.map(score,list(finishers.iterrows()))
 
     with open('standings/T400.json', 'w') as file:
         sorted_json=dict(sorted(t400.items(), key=lambda item: item[1], reverse=True))
@@ -432,6 +449,19 @@ if days > 345:
         getResults("mosaic",'13.1M')
         getResults("mosaic",'26.2M')
         with open('log.txt', 'a') as f: f.write('mosaig')
+
+#Maintains order after parallel operations
+#Allowing commit diffs to show changes
+fPrint("Cleaning up...")
+for path in ['standings/Garmin.json','standings/T300.json','standings/T400.json']:
+    with open('standings/T300.json', 'r') as file: jason = json.load(file)
+    jason = dict(sorted(jason.items()))
+    with open('standings/T300.json', 'w') as file:
+        sorted_json=dict(sorted(jason.items(), key=lambda item: item[1], reverse=True))
+        file.seek(0)
+        file.truncate()
+        json.dump(sorted_json, file, indent=4)
+
 
 #Move to end of previous line
 #Sets up next command prompt
