@@ -1,7 +1,4 @@
-import sys
-import json
-import argparse
-import requests # type: ignore
+import sys, json, argparse, requests # type: ignore
 from io import StringIO
 from datetime import date
 import pandas as pd # type: ignore
@@ -25,6 +22,9 @@ args = parser.parse_args()
 t3 = args.all or args.t300
 t4 = args.all or args.t400
 g = args.all or args.garmin
+
+if not (t3 or t4 or g):
+    sys.exit(0)
 
 if args.reset:
     with open('standings/T300.json', 'w') as file: json.dump({},file,indent=4)
@@ -116,29 +116,32 @@ def getTable(url):
 
 def updateT300():
     with open('standings/T300.json', 'w') as file: json.dump({},file,indent=4)
+    t300 = {}
     tables = [
         getTable("http://edsresults.com/cr{}/index.php?search_type=race_results&event=100M&gender=&results_per_page=1000".format(str(cur_year-1)[-2:])),
         getTable("http://edsresults.com/bandera{}/index.php?search_type=race_results&event=100K&gender=&results_per_page=1000".format(str(cur_year)[-2:])),
         getTable("http://edsresults.com/{}rr100/index.php?search_type=race_results&event=100M&gender=&results_per_page=1000".format(str(cur_year))),
         getTable("http://edsresults.com/{}rr100/index.php?search_type=race_results&event=100K&gender=&results_per_page=1000".format(str(cur_year)))
     ]
+
     for table in tables:
         finishers = table.loc[table['Status']=='Complete']
 
         for _,table in list(finishers.iterrows()):
             data=str(table).splitlines()[:-1]
             name = (str(data[4].split(" ")[-1])+" "+str(data[5].split(" ")[-1])).lower()
+        
+            #update mileages
+            if name in t300: t300[name] += 1
+            else: t300[name] = 1
 
-            with open('standings/T300.json', 'r+') as file:
-                t300=json.load(file)
-                #update mileages
-                if name in t300: t300[name] += 1
-                else: t300[name] = 1
-                sorted_json=dict(sorted(t300.items(), key=lambda item: item[1], reverse=True))
-                file.seek(0)
-                file.truncate()
-                json.dump(sorted_json, file, indent=4)
+    with open('standings/T300.json', 'w') as file:
+        sorted_json=dict(sorted(t300.items(), key=lambda item: item[1], reverse=True))
+        file.seek(0)
+        file.truncate()
+        json.dump(sorted_json, file, indent=4)
 def updateT400(t,dist,event):
+    with open('standings/T400.json', 'r') as file: t400=json.load(file)
     [f,l] = [3,4] if event in ["edge","canyonlake","caverns"] else [4,5]
     finishers = t.loc[t['Status']=='Complete']
     for _,table in list(finishers.iterrows()):
@@ -152,15 +155,9 @@ def updateT400(t,dist,event):
         elif "50K" in dist: mileage+=31.1
         else: return
 
-        with open('standings/T400.json', 'r+') as file:
-            t400=json.load(file)
-            #update mileages
-            if name in t400: t400[name] = round(t400[name]+mileage,1)
-            else: t400[name] = round(mileage,1)
-            sorted_json=dict(sorted(t400.items(), key=lambda item: item[1], reverse=True))
-            file.seek(0)
-            file.truncate()
-            json.dump(sorted_json, file, indent=4)
+        #update mileages
+        if name in t400: t400[name] = round(t400[name]+mileage,1)
+        else: t400[name] = round(mileage,1)
 
     if event not in ["edge","canyonlake"]:
         incomplete = t.loc[t['Status']=='DNF']
@@ -170,16 +167,17 @@ def updateT400(t,dist,event):
             i = 12 if event in [100,50] else 10
             mileage=partialMileage(dist,int(data[i].split(" ")[-1]),event)
             if mileage > 0:
-                with open('standings/T400.json', 'r+') as file:
-                    t400=json.load(file)
                     #update mileages
                     if name in t400: t400[name] = round(t400[name]+mileage,1)
                     else: t400[name] = round(mileage,1)
-                    sorted_json=dict(sorted(t400.items(), key=lambda item: item[1], reverse=True))
-                    file.seek(0)
-                    file.truncate()
-                    json.dump(sorted_json, file, indent=4)
+                
+    with open('standings/T400.json', 'w') as file:
+        file.seek(0)
+        file.truncate()
+        sorted_json=dict(sorted(t400.items(), key=lambda item: item[1], reverse=True))
+        json.dump(sorted_json, file, indent=4)
 def updateGarmin(table,dist,event):
+    with open('standings/Garmin.json', 'r') as file: garmin=json.load(file)
     [f,l] = [3,4] if event in ["edge","canyonlake","caverns"] else [4,5]
     finishers = table.loc[table['Status']=='Complete']
 
@@ -191,17 +189,18 @@ def updateGarmin(table,dist,event):
         elif any(word in dist for word in ['50K','26.2M','25M','20M','16M','25K','13.1M','10M']): points+=3
         elif any(word in dist for word in ['15K','8M','10K','5M']): points+=2
         else: points += 1
+        
+        #update mileages
+        if name in garmin: garmin[name] += points
+        else: garmin[name] = points
 
-        with open('standings/Garmin.json', 'r+') as file:
-            garmin=json.load(file)
-            #update mileages
-            if name in garmin: garmin[name] += points
-            else: garmin[name] = points
-            sorted_json=dict(sorted(garmin.items(), key=lambda item: item[1], reverse=True))
-            file.seek(0)
-            file.truncate()
-            json.dump(sorted_json, file, indent=4)
+    with open('standings/Garmin.json', 'w') as file:
+        sorted_json=dict(sorted(garmin.items(), key=lambda item: item[1], reverse=True))
+        file.seek(0)
+        file.truncate()
+        json.dump(sorted_json, file, indent=4)
 def updateLMS(table,dist):
+    with open('standings/T400.json', 'r') as file: t400=json.load(file)
     finishers = table.loc[table['Laps Complete']>0]
     for _,table in list(finishers.iterrows()):
         data=str(table).splitlines()[:-1]
@@ -210,15 +209,15 @@ def updateLMS(table,dist):
         sum=laps*dist
 
         if sum > 26.2:
-            with open('standings/T400.json', 'r+') as file:
-                t400=json.load(file)
-                #update mileages
-                if name in t400: t400[name] = round(t400[name]+sum,1)
-                else: t400[name] = round(sum,1)
-                sorted_json=dict(sorted(t400.items(), key=lambda item: item[1], reverse=True))
-                file.seek(0)
-                file.truncate()
-                json.dump(sorted_json, file, indent=4)
+            #update mileages
+            if name in t400: t400[name] = round(t400[name]+sum,1)
+            else: t400[name] = round(sum,1)
+
+    with open('standings/T400.json', 'w') as file:
+        sorted_json=dict(sorted(t400.items(), key=lambda item: item[1], reverse=True))
+        file.seek(0)
+        file.truncate()
+        json.dump(sorted_json, file, indent=4)
 
 def getResults(event,dist):
     fPrint(f"{event} {dist}")
@@ -241,9 +240,6 @@ def getResultsLMS(event):
             updateLMS(table,4.1667)
             table = getTable("https://edsresults.com/{}lps{}/index.php?search_type=race_results&event=LPS+Ruck&gender=&results_per_page=1000/".format(event,str(cur_year)[-2:]))
             updateLMS(table,2.47)
-
-if not (t3 or t4 or g):
-    sys.exit(0)
 
 if t3: updateT300()
 
