@@ -454,9 +454,9 @@ if days > 345:
 #Allowing commit diffs to show changes
 fPrint("Cleaning up...")
 for path in ['standings/Garmin.json','standings/T300.json','standings/T400.json']:
-    with open('standings/T300.json', 'r') as file: jason = json.load(file)
+    with open(path, 'r') as file: jason = json.load(file)
     jason = dict(sorted(jason.items()))
-    with open('standings/T300.json', 'w') as file:
+    with open(path, 'w') as file:
         sorted_json=dict(sorted(jason.items(), key=lambda item: item[1], reverse=True))
         file.seek(0)
         file.truncate()
