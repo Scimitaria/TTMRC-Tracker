@@ -89,11 +89,11 @@ def partialMileage(dist,splits,event):
                 case _: return 0
         case "cr": #Cactus Rose
             match splits:
-                case 3: return 40.1
+                case 3: return 41
                 case 4: return 50
-                case 5: return 59.9
+                case 5: return 59
                 case 6: return 75
-                case 7: return 90.1
+                case 7: return 91
                 case 8: return 100
                 case _: return 0
         case "wildhare":
@@ -239,7 +239,8 @@ def updateLMS(table,dist):
 def getResults(event,dist):
     fPrint(f"{event} {dist}")
     if not (t4 or g): return
-    table = getTable("http://edsresults.com/{}{}/index.php?search_type=race_results&event={}&gender=&results_per_page=1000/".format(event,str(cur_year)[-2:],dist))
+    if event == "cr": table = getTable("https://scoring.raceu.ninja/{}{}/index.php?search_type=race_results&event={}&gender=&results_per_page=1000#".format(event,str(cur_year)[-2:],dist))
+    else: table = getTable("http://edsresults.com/{}{}/index.php?search_type=race_results&event={}&gender=&results_per_page=1000/".format(event,str(cur_year)[-2:],dist))
     if t4 and event not in ["mellow","cavern","sanmarcos"]: updateT400(table,dist,event)
     if  g: updateGarmin(table,dist,event)
 def getResultsRocky(event,dist):
@@ -400,15 +401,22 @@ if not "frio" in log:
     with open('standings/T400.json', 'r+') as file:
         t400=json.load(file)
         t400['chris powers']+=31.1
+        t400['richard mccue']+=31.1
+        sorted_json=dict(sorted(t400.items(), key=lambda item: item[1], reverse=True))
+        file.seek(0)
+        file.truncate()
+        json.dump(sorted_json, file, indent=4)
+    with open('standings/Garmin.json', 'r+') as file:
+        t400=json.load(file)
+        t400['chris powers']+=3
+        t400['richard mccue']+=3
         sorted_json=dict(sorted(t400.items(), key=lambda item: item[1], reverse=True))
         file.seek(0)
         file.truncate()
         json.dump(sorted_json, file, indent=4)
     with open('log.txt', 'a') as f: f.write('frio')
 
-
 #Get GSA San Marcos results
-#That date ain't right...
 #if days > 295 and g and not 'sanmarcos' in log:
 #    getResults("greatsprings",'26.2M')
 #    getResults("greatsprings",'13.1M')
@@ -461,7 +469,6 @@ for path in ['standings/Garmin.json','standings/T300.json','standings/T400.json'
         file.seek(0)
         file.truncate()
         json.dump(sorted_json, file, indent=4)
-
 
 #Move to end of previous line
 #Sets up next command prompt
