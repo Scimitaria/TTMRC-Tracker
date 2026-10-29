@@ -5,6 +5,10 @@ import pandas as pd # type: ignore
 from concurrent.futures import ThreadPoolExecutor
 from bs4 import BeautifulSoup as bs # type: ignore
 
+#TODO: refactor json?
+#from name : points
+#to name : { "points" : points, "events" : [events] }
+
 # prevents pandas from cutting data
 pd.set_option('display.max_rows',None)
 
@@ -200,7 +204,7 @@ def updateGarmin(table,dist,event):
         elif any(word in dist for word in ['50K','26.2M','25M','20M','16M','25K','13.1M','10M']): points+=3
         elif any(word in dist for word in ['15K','8M','10K','5M']): points+=2
         else: points += 1
-        
+
         #update mileages
         if name in garmin: garmin[name] += points
         else: garmin[name] = points
@@ -375,6 +379,7 @@ if days > 260 and g and not 'mellow' in log:
 if days > 275:
     if t4 and not "cavern" in log:
         getResults("caverns",'16M')
+        getResults("caverns",'8M+Ruck')
         getResults("caverns",'8M')
         getResults("caverns",'4M')
         with open('log.txt', 'a') as f: f.write('cavern')
@@ -424,15 +429,17 @@ if not "frio" in log:
 #    with open('log.txt', 'a') as f: f.write('sanmarcos')
 
 #Get Cactus Rose results
-if days > 305:
-    if not 'cactus' in log:
-        getResults("cr",'100M')
-        getResults("cr",'50M')
-        with open('log.txt', 'a') as f: f.write('cactus')
-    if g and not 'cactug' in log:
-        getResults("cr",'25M')
-        getResults("cr",'5M')
-        with open('log.txt', 'a') as f: f.write('cactug')
+#if days > 305:
+if not 'cactus' in log:
+    getResults("cr",'100M')
+    getResults("cr",'50M')
+    with open('log.txt', 'a') as f: f.write('cactus')
+if g and not 'cactug' in log:
+    getResults("cr",'25M')
+    getResults("cr",'25M+Ruck')
+    getResults("cr",'5M')
+    getResults("cr",'5M+Ruck')
+    with open('log.txt', 'a') as f: f.write('cactug')
 
 #Get Wild Hare results
 if days > 325:
