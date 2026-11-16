@@ -243,7 +243,7 @@ def updateLMS(table,dist):
 def getResults(event,dist):
     fPrint(f"{event} {dist}")
     if not (t4 or g): return
-    if event == "cr": table = getTable("https://scoring.raceu.ninja/{}{}/index.php?search_type=race_results&event={}&gender=&results_per_page=1000#".format(event,str(cur_year)[-2:],dist))
+    if event in ["cr","wildhare"]: table = getTable("https://scoring.raceu.ninja/{}{}/index.php?search_type=race_results&event={}&gender=&results_per_page=1000#".format(event,str(cur_year)[-2:],dist))
     else: table = getTable("http://edsresults.com/{}{}/index.php?search_type=race_results&event={}&gender=&results_per_page=1000/".format(event,str(cur_year)[-2:],dist))
     if t4 and event not in ["mellow","cavern","sanmarcos"]: updateT400(table,dist,event)
     if  g: updateGarmin(table,dist,event)
@@ -429,17 +429,17 @@ if not "frio" in log:
 #    with open('log.txt', 'a') as f: f.write('sanmarcos')
 
 #Get Cactus Rose results
-#if days > 305:
-if not 'cactus' in log:
-    getResults("cr",'100M')
-    getResults("cr",'50M')
-    with open('log.txt', 'a') as f: f.write('cactus')
-if g and not 'cactug' in log:
-    getResults("cr",'25M')
-    getResults("cr",'25M+Ruck')
-    getResults("cr",'5M')
-    getResults("cr",'5M+Ruck')
-    with open('log.txt', 'a') as f: f.write('cactug')
+if days > 305:
+    if not 'cactus' in log:
+        getResults("cr",'100M')
+        getResults("cr",'50M')
+        with open('log.txt', 'a') as f: f.write('cactus')
+    if g and not 'cactug' in log:
+        getResults("cr",'25M')
+        getResults("cr",'25M+Ruck')
+        getResults("cr",'5M')
+        getResults("cr",'5M+Ruck')
+        with open('log.txt', 'a') as f: f.write('cactug')
 
 #Get Wild Hare results
 if days > 325:
